@@ -103,15 +103,18 @@ coef = dlmread('Polar_SC2110.dat');
     aero.cdp = coef(:,4);
     aero.cm = coef(:,5);
     
-    aero.cdmin = min(aero.cd);
+    cl_cd_max = 0;
+    %aero.cdmin = min(aero.cd);
     for i = 1:size(aero.cd)
-        if aero.cd(i) == aero.cdmin
+        if aero.cl(i)/aero.cd(i) > cl_cd_max
+            cl_cd_max = aero.cl(i)/aero.cd(i);
             aero.cl_opt = aero.cl(i);
+            aero.cd_opt = aero.cd(i);
             aero.alp_opt = aero.alpha(i);
         end
     end    
     
-    fprintf('El coeficiente de cl_opt: %f  y el ángulo de cl_opt: %f \n',aero.cl_opt, aero.alp_opt);
+    fprintf('El coeficiente de cl_opt: %f  y el ángulo de alpha_opt: %f \n',aero.cl_opt, aero.alp_opt);
     
 %     figure;
 %     plot(alpha,cl);
