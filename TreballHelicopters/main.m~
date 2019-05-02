@@ -9,7 +9,7 @@ datos.W = 0.5*10000;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
-datos.nb = 2; % num
+datos.nb = 2; % num de pales
 
 datos.Mtip = 0.5; 
 datos.T = 288.15; % ISA
@@ -37,6 +37,7 @@ AirfoilPlot(ent)
 Corbes_Cl_Cd(ent)
 Vi_MTH (datos)
 
+
 datos.N = 200;
 r_root = 0.5;
 Y = linspace(r_root,datos.R,datos.N);
@@ -48,24 +49,35 @@ end
 datos.Y = Y;
 clear Y
 
+for i=1:datos.N
+ solucio.vi(i) = Vi_BEM (datos, solucio,i);
+end
+
 %% FEM DERIVADA
 
 for i=1:datos.N
-    if ( datos.Y(i)/datos.R > 0.68 && datos.Y(i)/datos.R < 0.72)
+    if ( datos.Y(i)/datos.R > 0.69 && datos.Y(i)/datos.R < 0.71)
         m_1 = ( solucio.theta(i+1) - solucio.theta(i)) / (( datos.Y(i+1) - datos.Y(i))/datos.R);
         m_2 = ( solucio.sigma(i+1) - solucio.sigma(i)) / (( datos.Y(i+1) - datos.Y(i))/datos.R);
-        % solucio.theta_0 = solucio.theta(i);
-        % solucio.sigma_0 = solucio.sigma(i);
+        solucio.theta_7 = solucio.theta(i);
+        solucio.sigma_7 = solucio.sigma(i);
     end
 end
 
 for i=1:datos.N
 
-   solucio.theta_lin(i) =  solucio.theta(datos.N) + m_1 * (datos.Y(i)-datos.Y(datos.N))/datos.R;
-   solucio.sigma_lin(i) = solucio.sigma(datos.N) + m_2 * (datos.Y(i)-datos.Y(datos.N))/datos.R;
+   solucio.theta_lin(i) =  solucio.theta_7 + m_1 * (datos.Y(i)/datos.R-0.7);
+   solucio.sigma_lin(i) = solucio.sigma_7 + m_2 * (datos.Y(i)/datos.R-0.7);
+   solucio.corda_lin(i) = solucio.sigma_lin(i)*datos.R*pi / datos.nb; %Massa petites? Si son massa petites augmentar-les. 
 
-   solucio.corda_lin(i) = solucio.sigma_lin(i)*datos.R*pi / datos.
 end
+
+
+figure
+plot(datos.Y/datos.R, solucio.corda_lin*100);
+title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
+xlabel('R','Interpreter','latex','Fontsize',16);
+ylabel('cuerda linealizada [cm]','Interpreter','latex','Fontsize',16);
 
 
 figure
@@ -77,6 +89,7 @@ title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
 hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('$$\sigma_{ideal}$$','Interpreter','latex','Fontsize',16);
+legend('Linealitzada','Ideal','Interpreter','latex');
 
 
 
@@ -91,12 +104,20 @@ hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('$$\sigma_{ideal}$$','Interpreter','latex','Fontsize',16);
 
+
 figure
 plot( datos.Y/datos.R , rad2deg(solucio.theta) );
 title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',18);
 hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
+
+
+figure
+plot(datos.Y/datos.R, solucio.vi);
+title ('Velocitat induida','Interpreter','latex','Fontsize',18);
+xlabel('R','Interpreter','latex','Fontsize',16);
+ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
 
 %%% FUNCIONES
 
@@ -106,6 +127,14 @@ global param
     % T = datos.W;
     A = pi*datos.R^2;
     param.Vi = sqrt(datos.W/(2 * datos.rho * A));
+
+end
+
+function velocitat = Vi_BEM (datos,solucio,i)
+global aero
+
+velocitat = solucio.sigma(i)*aero.cl_opt/16*(sqrt(1+32/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
+    *aero.cl_opt)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
 
 end
 
@@ -150,7 +179,7 @@ coef = dlmread('Polar_SC2110.dat');
     aero.cd = coef(:,3);
     aero.cdp = coef(:,4);
     aero.cm = coef(:,5);
-    
+    aero.clalfa = aer
     cl_cd_max = 0;
     %aero.cdmin = min(aero.cd);
     for i = 1:size(aero.cd)

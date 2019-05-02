@@ -37,6 +37,7 @@ AirfoilPlot(ent)
 Corbes_Cl_Cd(ent)
 Vi_MTH (datos)
 
+
 datos.N = 200;
 r_root = 0.5;
 Y = linspace(r_root,datos.R,datos.N);
@@ -47,6 +48,10 @@ end
 
 datos.Y = Y;
 clear Y
+
+for i=1:datos.N
+ solucio.vi(i) = Vi_BEM (datos, solucio,i);
+end
 
 %% FEM DERIVADA
 
@@ -63,8 +68,8 @@ for i=1:datos.N
 
    solucio.theta_lin(i) =  solucio.theta_7 + m_1 * (datos.Y(i)/datos.R-0.7);
    solucio.sigma_lin(i) = solucio.sigma_7 + m_2 * (datos.Y(i)/datos.R-0.7);
+   solucio.corda_lin(i) = solucio.sigma_lin(i)*datos.R*pi / datos.nb; %Massa petites? Si son massa petites augmentar-les. 
 
-   solucio.corda_lin(i) = solucio.sigma_lin(i)*datos.R*pi / datos.nb;
 end
 
 
@@ -84,6 +89,7 @@ title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
 hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('$$\sigma_{ideal}$$','Interpreter','latex','Fontsize',16);
+legend('Linealitzada','Ideal','Interpreter','latex');
 
 
 
@@ -98,12 +104,20 @@ hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('$$\sigma_{ideal}$$','Interpreter','latex','Fontsize',16);
 
+
 figure
 plot( datos.Y/datos.R , rad2deg(solucio.theta) );
 title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',18);
 hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
+
+
+figure
+plot(datos.Y/datos.R, solucio.vi);
+title ('Velocitat induida','Interpreter','latex','Fontsize',18);
+xlabel('R','Interpreter','latex','Fontsize',16);
+ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
 
 %%% FUNCIONES
 
@@ -114,6 +128,14 @@ global param
     A = pi*datos.R^2;
     param.Vi = sqrt(datos.W/(2 * datos.rho * A));
 
+end
+
+function velocitat = Vi_BEM (datos,solucio,i)
+global aero
+
+lambda = solucio.sigma(i)*aero.clalpha/16*(sqrt(1+32/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
+    *aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
+velocitat = lambda*datos.omega*datos.R;
 end
 
 function [SIGMA, THETA] = BEM (datos, Y, param)
@@ -157,7 +179,7 @@ coef = dlmread('Polar_SC2110.dat');
     aero.cd = coef(:,3);
     aero.cdp = coef(:,4);
     aero.cm = coef(:,5);
-    
+    aero.clalpha = (aero.cl(90)-aero.cl(32))/(deg2rad(aero.alpha(90))-deg2rad(aero.alpha(32)));
     cl_cd_max = 0;
     %aero.cdmin = min(aero.cd);
     for i = 1:size(aero.cd)
