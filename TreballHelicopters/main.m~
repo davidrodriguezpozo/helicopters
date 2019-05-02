@@ -5,17 +5,16 @@ clc
 % CONSTANTES DEL PROBLEMA
 datos.n_rotors = 4; %núm de rotors
 datos.DL = 25;
-datos.W = 1000;
-david = 2;
+datos.W = 0.5*10000;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
 
 datos.Mtip = 0.5; 
 datos.T = 288.15; % ISA
-datos.R = 287; 
+datos.Rg = 287; 
 datos.gamma = 1.4;
-datos.a = sqrt(datos.gamma * datos.R * datos.T);
+datos.a = sqrt(datos.gamma * datos.Rg * datos.T);
 
 datos.omega = datos.Mtip * datos.a / datos.R;
 
@@ -38,14 +37,47 @@ Corbes_Cl_Cd(ent)
 Vi_MTH (datos)
 
 datos.N = 200;
-Y = linspace(0,datos.R,datos.N);
+r_root = 0.5;
+Y = linspace(r_root,datos.R,datos.N);
 
 for i=1:datos.N
-    solucio.sigma(i) = BEM(datos, Y(i));
+    [ solucio.sigma(i) , solucio.theta(i) ]= BEM(datos,Y(i));
 end
 
 datos.Y = Y;
 clear Y
+
+%% FEM DERIVADA
+
+for i=1:datos.N
+    if ( datos.Y(i)/datos.R > 0.68 && datos.Y(i)/datos.R < 0.72)
+        m_1 = ( solucio.theta(i) - solucio.theta(i+1)) / ( datos.Y(i) - datos.Y(i+1));
+        m_2 = ( solucio.sigma(i) - solucio.sigma(i+1)) / ( datos.Y(i) - datos.Y(i+1));
+%         solucio.theta_tip = solucio.theta(i);
+%         solucio.sigma_tip = solucio.sigma(i);
+    end
+end
+
+for i=datos.N:-1:1
+   solucio.theta_lin(i) = solucio.theta(datos.N) - m_1 * (datos.Y(i)-datos.Y(i-1))/datos.R;
+   solucio.sigma_lin(i) = solucio.sigma(datos.N) - m_2 * datos.Y(i)/datos.R;
+end
+
+figure
+plot(datos.Y/datos.R,solucio.sigma_lin);
+hold on
+plot(datos.Y/datos.R,solucio.sigma);
+
+title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
+hold on;
+xlabel('R','Interpreter','latex','Fontsize',16);
+ylabel('$$\sigma_{ideal}$$','Interpreter','latex','Fontsize',16);
+
+
+
+
+
+
 
 figure
 plot(datos.Y/datos.R,solucio.sigma);
@@ -53,6 +85,16 @@ title ('$$\sigma$$ ideal','Interpreter','latex','Fontsize',18);
 hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('$$\sigma_{ideal}$$','Interpreter','latex','Fontsize',16);
+
+figure
+plot( datos.Y/datos.R , rad2deg(solucio.theta) );
+title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',18);
+hold on;
+xlabel('R','Interpreter','latex','Fontsize',16);
+ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
+
+%%% FUNCIONES
+
 
 function Vi_MTH (datos)
 global param
@@ -62,7 +104,7 @@ global param
 
 end
 
-function [SIGMA] = BEM (datos, Y)
+function [SIGMA, THETA] = BEM (datos, Y, param)
     global param
     global aero
 
@@ -76,7 +118,7 @@ function [SIGMA] = BEM (datos, Y)
     
     %alpha = theta - phi;
     
-    theta = atan((lambda_c + lambda_i)/r);
+    THETA =  atan((lambda_c + lambda_i)/r) + deg2rad(alpha);
     
     %sigma/8*(r^2+(lambda_i + lambda_c)^2)*(cl*cos(theta) - cd*sin(theta)) = r*lamba_i*(lambda_c+lambda_i);
     
@@ -87,7 +129,7 @@ function [SIGMA] = BEM (datos, Y)
     end
     
     SIGMA = r*lambda_i*(lambda_c+lambda_i)/((r^2+(lambda_i + lambda_c)^2)...
-        *(aero.cl(k)*cos(theta) - aero.cd(k)*sin(theta)))*8;
+        *(aero.cl(k)*cos(THETA) - aero.cd(k)*sin(THETA)))*8;
    
 end
 
