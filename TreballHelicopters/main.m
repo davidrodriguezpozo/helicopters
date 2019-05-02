@@ -50,7 +50,7 @@ datos.Y = Y;
 clear Y
 
 for i=1:datos.N
- solucio.vi(i) = Vi_BEM (datos, solucio,i);
+ [solucio.vi(i), solucio.vi_p(i)] = Vi_BEM (datos, solucio,i);
 end
 
 %% FEM DERIVADA
@@ -114,10 +114,12 @@ ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
 
 
 figure
-plot(datos.Y/datos.R, solucio.vi);
+plot(datos.Y/datos.R, solucio.vi); hold on;
+plot(datos.Y/datos.R, solucio.vi_p);
 title ('Velocitat induida','Interpreter','latex','Fontsize',18);
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
+legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes de Prandtl');
 
 %%% FUNCIONES
 
@@ -130,13 +132,30 @@ global param
 
 end
 
-function velocitat = Vi_BEM (datos,solucio,i)
+function [velocitat,velocitat_p] = Vi_BEM (datos,solucio,i)
 global aero
 
 lambda = solucio.sigma(i)*aero.clalpha/16*(sqrt(1+32/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
     *aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
 velocitat = lambda*datos.omega*datos.R;
+
+%%Con pérdidas de Prandtl 
+lambda_p = 0.02;
+delta = 100;
+
+while delta > 1e-7 %S'ha d'iterar PUTA MERDAAAA
+    phi = lambda_p/(datos.Y(i)/datos.R);
+    f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
+    F = 2/pi*cos(exp(-f))^1;
+    lambda_pcalc = solucio.sigma(i)*aero.clalpha/(16*F)*(sqrt(1+(32*F)/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
+    *aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
+    delta = lambda_pcalc - lambda_p;
+    lambda_p = lambda_pcalc;
 end
+
+velocitat_p = lambda_p*datos.omega*datos.R;
+end
+
 
 function [SIGMA, THETA] = BEM (datos, Y, param)
     global param
