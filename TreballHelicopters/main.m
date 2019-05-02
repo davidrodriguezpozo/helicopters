@@ -6,6 +6,7 @@ clc
 datos.n_rotors = 4; %núm de rotors
 datos.DL = 25;
 datos.W = 1000;
+david = 2;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
