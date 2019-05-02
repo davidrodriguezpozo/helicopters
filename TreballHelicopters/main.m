@@ -9,6 +9,7 @@ datos.W = 0.5*10000;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
+datos.nb = 2; % num de pales
 
 datos.Mtip = 0.5; 
 datos.T = 288.15; % ISA
@@ -50,29 +51,34 @@ clear Y
 %% FEM DERIVADA
 
 for i=1:datos.N
-    if ( datos.Y(i)/datos.R > 0.68 && datos.Y(i)/datos.R < 0.72)
-        m_1 = ( solucio.theta(i) - solucio.theta(i+1)) / ( datos.Y(i) - datos.Y(i+1))/datos.R;
-        m_2 = ( solucio.sigma(i) - solucio.sigma(i+1)) / ( datos.Y(i) - datos.Y(i+1))/datos.R;
-%         solucio.theta_tip = solucio.theta(i);
-%         solucio.sigma_tip = solucio.sigma(i);
+    if ( datos.Y(i)/datos.R > 0.69 && datos.Y(i)/datos.R < 0.71)
+        m_1 = ( solucio.theta(i+1) - solucio.theta(i)) / (( datos.Y(i+1) - datos.Y(i))/datos.R);
+        m_2 = ( solucio.sigma(i+1) - solucio.sigma(i)) / (( datos.Y(i+1) - datos.Y(i))/datos.R);
+        solucio.theta_7 = solucio.theta(i);
+        solucio.sigma_7 = solucio.sigma(i);
     end
 end
 
-for i=datos.N:-1:2
-    if i == datos.N
-        solucio.theta_lin(i) = solucio.theta(datos.N);
-        solucio.sigma_lin(i) = solucio.sigma(datos.N);
-    else
-   solucio.theta_lin(i) =  solucio.theta_lin(i+1) - m_1 * (datos.Y(i+1)-datos.Y(i))/datos.R;
-   solucio.sigma_lin(i) = solucio.sigma(datos.N) - m_2 * (datos.Y(i+1)-datos.Y(i))/datos.R;
-    end
+for i=1:datos.N
+
+   solucio.theta_lin(i) =  solucio.theta_7 + m_1 * (datos.Y(i)/datos.R-0.7);
+   solucio.sigma_lin(i) = solucio.sigma_7 + m_2 * (datos.Y(i)/datos.R-0.7);
+
+   solucio.corda_lin(i) = solucio.sigma_lin(i)*datos.R*pi / datos.nb;
 end
 
 
 figure
-plot(datos.Y/datos.R,solucio.theta_lin);
+plot(datos.Y/datos.R, solucio.corda_lin*100);
+title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
+xlabel('R','Interpreter','latex','Fontsize',16);
+ylabel('cuerda linealizada [cm]','Interpreter','latex','Fontsize',16);
+
+
+figure
+plot(datos.Y/datos.R, rad2deg(solucio.theta_lin));
 hold on
-plot(datos.Y/datos.R, solucio.theta);
+plot(datos.Y/datos.R, rad2deg(solucio.theta));
 
 title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
 hold on;

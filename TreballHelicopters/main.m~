@@ -9,6 +9,7 @@ datos.W = 0.5*10000;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
+datos.nb = 2; % num
 
 datos.Mtip = 0.5; 
 datos.T = 288.15; % ISA
@@ -51,22 +52,26 @@ clear Y
 
 for i=1:datos.N
     if ( datos.Y(i)/datos.R > 0.68 && datos.Y(i)/datos.R < 0.72)
-        m_1 = ( solucio.theta(i) - solucio.theta(i+1)) / ( datos.Y(i) - datos.Y(i+1));
-        m_2 = ( solucio.sigma(i) - solucio.sigma(i+1)) / ( datos.Y(i) - datos.Y(i+1));
-%         solucio.theta_tip = solucio.theta(i);
-%         solucio.sigma_tip = solucio.sigma(i);
+        m_1 = ( solucio.theta(i+1) - solucio.theta(i)) / (( datos.Y(i+1) - datos.Y(i))/datos.R);
+        m_2 = ( solucio.sigma(i+1) - solucio.sigma(i)) / (( datos.Y(i+1) - datos.Y(i))/datos.R);
+        % solucio.theta_0 = solucio.theta(i);
+        % solucio.sigma_0 = solucio.sigma(i);
     end
 end
 
-for i=datos.N:-1:1
-   solucio.theta_lin(i) = solucio.theta(datos.N) - m_1 * (datos.Y(i)-datos.Y(i-1))/datos.R;
-   solucio.sigma_lin(i) = solucio.sigma(datos.N) - m_2 * datos.Y(i)/datos.R;
+for i=1:datos.N
+
+   solucio.theta_lin(i) =  solucio.theta(datos.N) + m_1 * (datos.Y(i)-datos.Y(datos.N))/datos.R;
+   solucio.sigma_lin(i) = solucio.sigma(datos.N) + m_2 * (datos.Y(i)-datos.Y(datos.N))/datos.R;
+
+   solucio.corda_lin(i) = solucio.sigma_lin(i)*datos.R*pi / datos.
 end
 
+
 figure
-plot(datos.Y/datos.R,solucio.sigma_lin);
+plot(datos.Y/datos.R, rad2deg(solucio.theta_lin));
 hold on
-plot(datos.Y/datos.R,solucio.sigma);
+plot(datos.Y/datos.R, rad2deg(solucio.theta));
 
 title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
 hold on;
