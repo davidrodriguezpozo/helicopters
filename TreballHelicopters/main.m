@@ -5,7 +5,7 @@ clc
 % CONSTANTES DEL PROBLEMA
 datos.n_rotors = 4; %núm de rotors
 datos.DL = 25;
-datos.W = 0.5*10000;
+datos.W = 0.5;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
@@ -39,7 +39,7 @@ Vi_MTH (datos)
 
 
 datos.N = 200;
-r_root = 0.5;
+r_root = 0.005;
 Y = linspace(r_root,datos.R,datos.N);
 
 for i=1:datos.N
