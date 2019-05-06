@@ -3,7 +3,7 @@ close all
 clc
 
 % CONSTANTES DEL PROBLEMA
-datos.n_rotors = 4; %núm de rotors
+datos.n_rotors = 3; %nÃºm de rotors
 datos.DL = 25;
 datos.W = 0.5;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
@@ -119,7 +119,7 @@ plot(datos.Y/datos.R, solucio.vi_p);
 title ('Velocitat induida','Interpreter','latex','Fontsize',18);
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
-legend('Velocitat induida ideal','Velocitat induida amb correcci� per efectes de Prandtl');
+legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes de Prandtl');
 
 %%% FUNCIONES
 
@@ -139,7 +139,7 @@ lambda = solucio.sigma(i)*aero.clalpha/16*(sqrt(1+32/(solucio.sigma(i)... %% Ha 
     *aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
 velocitat = lambda*datos.omega*datos.R;
 
-%%Con p�rdidas de Prandtl 
+%%Con pérdidas de Prandtl 
 lambda_p = 0.5;
 delta = 100;
 while delta > 1e-20 %S'ha d'iterar
@@ -152,7 +152,7 @@ while delta > 1e-20 %S'ha d'iterar
     lambda_p = lambda_pcalc;
 end
 
-velocitat_p = lambda_p*datos.omega*datos.R; %velocitat_p : vel. + correcci� Prandtl
+velocitat_p = lambda_p*datos.omega*datos.R; %velocitat_p : vel. + correcció Prandtl
 end
 
 
@@ -209,7 +209,7 @@ coef = dlmread('Polar_SC2110.dat');
         end
     end    
     
-    fprintf('El coeficiente de cl_opt: %f  y el ángulo de alpha_opt: %f \n',aero.cl_opt, aero.alp_opt);
+    fprintf('El coeficiente de cl_opt: %f  y el Ã¡ngulo de alpha_opt: %f \n',aero.cl_opt, aero.alp_opt);
     
 %     figure;
 %     plot(alpha,cl);
