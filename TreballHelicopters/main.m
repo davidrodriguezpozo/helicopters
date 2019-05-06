@@ -142,7 +142,7 @@ velocitat = lambda*datos.omega*datos.R;
 %%Con pérdidas de Prandtl 
 lambda_p = 0.5;
 delta = 100;
-while delta > 1e-10 %S'ha d'iterar PUTA MERDAAAA
+while delta > 1e-20 %S'ha d'iterar
     phi = atan(lambda_p/(datos.Y(i)/datos.R)); 
     f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
     F = 2/pi*cos(exp(-f))^1;
@@ -197,7 +197,7 @@ coef = dlmread('Polar_SC2110.dat');
     aero.cd = coef(:,3);
     aero.cdp = coef(:,4);
     aero.cm = coef(:,5);
-    aero.clalpha = (aero.cl(90)-aero.cl(32))/(deg2rad(aero.alpha(90))-deg2rad(aero.alpha(32)));
+    aero.clalpha = (aero.cl(90)-aero.cl(32))/(deg2rad(aero.alpha(90))-deg2rad(aero.alpha(32))); %dona 5.8 que es resultat abstant bo
     cl_cd_max = 0;
     %aero.cdmin = min(aero.cd);
     for i = 1:size(aero.cd)
