@@ -48,10 +48,29 @@ for i=1:datos.N
     [ solucio.sigma(i) , solucio.theta(i) ]= BEM(datos,Y(i));
 end
 
+
+
 datos.Y = Y;
 clear Y
 
 BEM_lineal(datos)
+
+for i=1:datos.N
+[solucio.vi(i), solucio.vi_p(i)] = Vi_BEM (datos, solucio,i);
+end
+
+figure
+plot(datos.Y/datos.R, solucio.vi); hold on;
+plot(datos.Y/datos.R, solucio.vi_p);
+title ('Velocitat induida','Interpreter','latex','Fontsize',18);
+xlabel('R','Interpreter','latex','Fontsize',16);
+ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
+legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes de Prandtl');
+
+
+
+
+
 
 %% OPERACION Omega 
 
@@ -60,24 +79,20 @@ BEM_lineal(datos)
 
   [Omega] = NO_BEM (datos, solucio,i);
 
-  
+
 function [Omega] = NO_BEM (datos, solucio,i) 
     
+Omega = 0:1:5000;
+
+
+
+disp('aqui');
+%fun = int(dFz) - W; 
 
 end
 
 
-%for i=1:datos.N
-% [solucio.vi(i), solucio.vi_p(i)] = Vi_BEM (datos, solucio,i);
-%end
 
-%figure
-%plot(datos.Y/datos.R, solucio.vi); hold on;
-%plot(datos.Y/datos.R, solucio.vi_p);
-%title ('Velocitat induida','Interpreter','latex','Fontsize',18);
-%xlabel('R','Interpreter','latex','Fontsize',16);
-%ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
-%legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes de Prandtl');
 
 %% --- FUNCIONES ---
 
@@ -149,38 +164,77 @@ global param
 
 end
 
+
+
 function [velocitat,velocitat_p] = Vi_BEM (datos,solucio,i)
+delta = 10;
+i 
+lambda_i = 3.5; %Per iniciar la iteracio suposem una lambda_i inicial
+while delta>10e-2
 global aero
+syms lamb
+lambda_c = datos.Vc/(datos.omega*datos.R);
+r = datos.Y(i)/datos.R;
 
-lambda = solucio.sigma(i)*aero.clalpha/16*(sqrt(1+32/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
-    *aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
-velocitat = lambda*datos.omega*datos.R;
+%phi = atan((lambda_c-lamb)/r); 
+%alpha = solucio.theta_lin(i) - phi;
 
-%%Con pérdidas de Prandtl 
-lambda_p = 0.5;
-delta = 100;
-while delta > 1e-20 %S'ha d'iterar
-    phi = atan(lambda_p/(datos.Y(i)/datos.R)); 
-    f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
-    F = 2/pi*cos(exp(-f))^1;
-    %lambda_pcalc = solucio.sigma(i)*aero.clalpha/(16*F)*(sqrt(1+(32*F)/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
-    %*aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
-    
-    syms lambda_i
-    
-    r = datos.Y(i)/datos.R;
-    
-    alpha = 10;
-    sigma = solucio.sigma(i);
-    
-    dif = 8*(lambda_c + lambda_i)*F*lamba_i*r - ...
-        (r^2 + (lambda_c+lambda_i)^2)*(cl(alpha)*cos(theta) - cd(alpha)*sin(theta))*sigma;
-    
-    delta = abs(lambda_pcalc - lambda_p);
-    lambda_p = lambda_pcalc;
+%eqn = 8*(lamb+lambda_c)*lamb - ( (r^2+(lambda_c+lamb)^2)*(aero.cl(double(alpha(1)))*cos(phi)-...
+%   aero.cd(double(alpha(1)))*sin(phi))*solucio.sigma(i) );
+alpha = solucio.theta_lin(i) -  atan((lambda_c-lambda_i)/r);
+cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
+cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
+
+eqn = 8*(lamb+lambda_c)*lamb - ( (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c-lamb)/r) )-...
+    cd*sin(atan((lambda_c-lamb)/r)) )*solucio.sigma(i));
+
+sol = solve(eqn,lamb);
+
+for j=1:4
+    bool = isreal(double(sol(j)));
+    if bool == 1
+        sol_bona = double(sol(j));
+    end
 end
 
-velocitat_p = lambda_p*datos.omega*datos.R; %velocitat_p : vel. + correcció Prandtl
+delta = abs(double(sol_bona)-lambda_i)
+
+lambda_i = double(sol_bona);
+
+
+
+
+% %%Con pérdidas de Prandtl 
+% lambda_p = 0.5;
+% delta = 100;
+% while delta > 1e-20 %S'ha d'iterar
+%     phi = atan(lambda_p/(datos.Y(i)/datos.R)); 
+%     f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
+%     F = 2/pi*cos(exp(-f))^1;
+%     %lambda_pcalc = solucio.sigma(i)*aero.clalpha/(16*F)*(sqrt(1+(32*F)/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
+%     %*aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
+%     
+%     syms lambda_i
+%     
+%     r = datos.Y(i)/datos.R;
+%     
+%     alpha = 10;
+%     sigma = solucio.sigma(i);
+%     
+%     dif = 8*(lambda_c + lambda_i)*F*lamba_i*r - ...
+%         (r^2 + (lambda_c+lambda_i)^2)*(cl(alpha)*cos(theta) - cd(alpha)*sin(theta))*sigma;
+%     
+%     delta = abs(lambda_pcalc - lambda_p);
+%     lambda_p = lambda_pcalc;
+% end
+
+end
+velocitat = lambda_i*datos.omega*datos.R;
+
+phi = atan((lambda_c-lambda_i)/r);
+f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
+F = 2/pi*cos(exp(-f))^1;
+velocitat_p = velocitat*F; %velocitat_p : vel. + correcció Prandtl
 end
 
 function [SIGMA, THETA] = BEM (datos, Y, param)
@@ -262,9 +316,9 @@ coef = dlmread('Polar_SC2110.dat');
     
     n = length(aero.cl);
     
-    new_alpha(1) = -45; new_cl(1) = -0.0; new_cd(1) = -0.0;
-    new_alpha(2) = -45+5; new_cl(2) = -0.1; new_cd(2) = -0.0;
-    new_alpha(3) = -45+10; new_cl(3) = -0.2; new_cd(3) = -0.0;
+    new_alpha(1) = -45; new_cl(1) = -0.0; new_cd(1) = 1;
+    new_alpha(2) = -45+5; new_cl(2) = -0.1; new_cd(2) = 0.7;
+    new_alpha(3) = -45+10; new_cl(3) = -0.2; new_cd(3) = 0.3;
     
     for i=4:length(aero.alpha)+3
        new_alpha (i) = aero.alpha(i-3); 
@@ -274,10 +328,25 @@ coef = dlmread('Polar_SC2110.dat');
     
     N = length(new_alpha);
     
-    new_alpha(N+1) = 45-15; new_cl(N+1) = 0.5; new_cd(N+1) = 0.0;
-    new_alpha(N+2) = 45-5; new_cl(N+2) = 0.1; new_cd(N+2) = 0.0;
-    new_alpha(N+3) = 45; new_cl(N+3) = 0.0; new_cd(N+3) = 0.0;
+    new_alpha(N+1) = 45-15; new_cl(N+1) = 0.5; new_cd(N+1) = 0.3;
+    new_alpha(N+2) = 45-5; new_cl(N+2) = 0.1; new_cd(N+2) = 0.7;
+    new_alpha(N+3) = 45; new_cl(N+3) = 0.0; new_cd(N+3) = 1;
    
+    
+    figure
+    plot(new_alpha,new_cd);
+    
+    aero.new_cl =new_cl;
+    aero.new_alpha =new_alpha;
+    aero.new_cd =new_cd;
+    
+    % Definim les funcions amb PCHIP
+    xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
+    %x_d = -rad2deg(pi/4):0.01:rad2deg(pi/4);
+    aero.funcio_cl = pchip(new_alpha,new_cl,xq);
+    aero.funcio_cd = pchip(new_alpha,new_cd,xq);
+    aero.funcio_alpha = xq;
+    
     figure;
     plot(new_alpha,new_cl,'-.','Color','b');
     title ('$$C_l$$ vs $$\alpha$$ modified','Interpreter','latex','Fontsize',16);
