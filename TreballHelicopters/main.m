@@ -5,7 +5,7 @@ clc
 % CONSTANTES DEL PROBLEMA
 datos.n_rotors = 4; %num de rotors
 datos.DL = 25;
-datos.W = 0.5;
+datos.W = 0.5+0.7*0.2;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
@@ -157,7 +157,7 @@ function Vi_MTH (datos)
 global param
     % T = datos.W;
     A = pi*datos.R^2;
-    param.Vi = sqrt(0.25*datos.W/(2 * datos.rho * A)); %0.25*W perque hi ha 4 rotors
+    param.Vi = sqrt(0.25*datos.W*9.81/(2 * datos.rho * A)); %0.25*W perque hi ha 4 rotors
 
 end
 
@@ -249,8 +249,10 @@ function [SIGMA, THETA] = BEM (datos, Y, param)
         end    
     end
     
+    PHI = THETA - alpha;
+    
     SIGMA = r*lambda_i*(lambda_c+lambda_i)/((r^2+(lambda_i + lambda_c)^2)...
-        *(aero.cl(k)*cos(THETA) - aero.cd(k)*sin(THETA)))*8;
+        *(aero.cl(k)*cos(PHI) - aero.cd(k)*sin(PHI)))*8;
    
 end
 
