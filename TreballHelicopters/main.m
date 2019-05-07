@@ -63,7 +63,12 @@ BEM_lineal(datos)
   
 function [Omega] = NO_BEM (datos, solucio,i) 
     
-fsolve =
+Omega = 0:1:5000;
+
+
+
+disp('aqui');
+%fun = int(dFz) - W; 
 
 end
 
