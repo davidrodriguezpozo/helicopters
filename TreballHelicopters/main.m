@@ -3,7 +3,7 @@ close all
 clc
 
 % CONSTANTES DEL PROBLEMA
-datos.n_rotors = 3; %nÃºm de rotors
+datos.n_rotors = 4; %num de rotors
 datos.DL = 25;
 datos.W = 0.5;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
@@ -32,6 +32,8 @@ param.cl_opt = 0;
 param.alp_opt = 0;
 param.Vi = 0;
 
+global solucio
+
 ent = 1;
 AirfoilPlot(ent)
 Corbes_Cl_Cd(ent)
@@ -49,11 +51,40 @@ end
 datos.Y = Y;
 clear Y
 
-for i=1:datos.N
- [solucio.vi(i), solucio.vi_p(i)] = Vi_BEM (datos, solucio,i);
+BEM_lineal(datos)
+
+%% OPERACION Omega 
+
+% Ara sigma es coneguda, la corda tambe
+% La velocitat induida no
+
+  [Omega] = NO_BEM (datos, solucio,i);
+
+  
+function [Omega] = NO_BEM (datos, solucio,i) 
+    
+fsolve =
+
 end
 
-%% FEM DERIVADA
+
+%for i=1:datos.N
+% [solucio.vi(i), solucio.vi_p(i)] = Vi_BEM (datos, solucio,i);
+%end
+
+%figure
+%plot(datos.Y/datos.R, solucio.vi); hold on;
+%plot(datos.Y/datos.R, solucio.vi_p);
+%title ('Velocitat induida','Interpreter','latex','Fontsize',18);
+%xlabel('R','Interpreter','latex','Fontsize',16);
+%ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
+%legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes de Prandtl');
+
+%% --- FUNCIONES ---
+
+function BEM_lineal (datos)
+
+global solucio
 
 for i=1:datos.N
     if ( datos.Y(i)/datos.R > 0.69 && datos.Y(i)/datos.R < 0.71)
@@ -75,7 +106,7 @@ end
 
 figure
 plot(datos.Y/datos.R, solucio.corda_lin*100);
-title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
+title ('Cuerda obtenida mediante método linealizado','Interpreter','latex','Fontsize',18);
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('cuerda linealizada [cm]','Interpreter','latex','Fontsize',16);
 
@@ -85,24 +116,21 @@ plot(datos.Y/datos.R, rad2deg(solucio.theta_lin));
 hold on
 plot(datos.Y/datos.R, rad2deg(solucio.theta));
 
-title ('$$\sigma$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
+title ('$$\theta$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
 hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
-ylabel('$$\sigma_{ideal}$$','Interpreter','latex','Fontsize',16);
+ylabel('$$\theta$$[deg]','Interpreter','latex','Fontsize',16);
 legend('Linealitzada','Ideal','Interpreter','latex');
-
-
-
-
-
 
 
 figure
 plot(datos.Y/datos.R,solucio.sigma);
-title ('$$\sigma$$ ideal','Interpreter','latex','Fontsize',18);
+title ('$$\sigma$$ ideal y linealizada','Interpreter','latex','Fontsize',18);
 hold on;
+plot(datos.Y/datos.R,solucio.sigma_lin);
 xlabel('R','Interpreter','latex','Fontsize',16);
-ylabel('$$\sigma_{ideal}$$','Interpreter','latex','Fontsize',16);
+ylabel('$$\sigma$$','Interpreter','latex','Fontsize',16);
+legend('Linealitzada','Ideal','Interpreter','latex');
 
 
 figure
@@ -112,17 +140,7 @@ hold on;
 xlabel('R','Interpreter','latex','Fontsize',16);
 ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
 
-
-figure
-plot(datos.Y/datos.R, solucio.vi); hold on;
-plot(datos.Y/datos.R, solucio.vi_p);
-title ('Velocitat induida','Interpreter','latex','Fontsize',18);
-xlabel('R','Interpreter','latex','Fontsize',16);
-ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
-legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes de Prandtl');
-
-%%% FUNCIONES
-
+end
 
 function Vi_MTH (datos)
 global param
@@ -146,15 +164,25 @@ while delta > 1e-20 %S'ha d'iterar
     phi = atan(lambda_p/(datos.Y(i)/datos.R)); 
     f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
     F = 2/pi*cos(exp(-f))^1;
-    lambda_pcalc = solucio.sigma(i)*aero.clalpha/(16*F)*(sqrt(1+(32*F)/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
-    *aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
+    %lambda_pcalc = solucio.sigma(i)*aero.clalpha/(16*F)*(sqrt(1+(32*F)/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
+    %*aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
+    
+    syms lambda_i
+    
+    r = datos.Y(i)/datos.R;
+    
+    alpha = 10;
+    sigma = solucio.sigma(i);
+    
+    dif = 8*(lambda_c + lambda_i)*F*lamba_i*r - ...
+        (r^2 + (lambda_c+lambda_i)^2)*(cl(alpha)*cos(theta) - cd(alpha)*sin(theta))*sigma;
+    
     delta = abs(lambda_pcalc - lambda_p);
     lambda_p = lambda_pcalc;
 end
 
 velocitat_p = lambda_p*datos.omega*datos.R; %velocitat_p : vel. + correcció Prandtl
 end
-
 
 function [SIGMA, THETA] = BEM (datos, Y, param)
     global param
