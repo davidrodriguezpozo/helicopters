@@ -178,16 +178,16 @@ r = datos.Y(i)/datos.R;
 
 %eqn = 8*(lamb+lambda_c)*lamb - ( (r^2+(lambda_c+lamb)^2)*(aero.cl(double(alpha(1)))*cos(phi)-...
 %   aero.cd(double(alpha(1)))*sin(phi))*solucio.sigma(i) );
-alpha = solucio.theta_lin(i) -  atan((lambda_c-lambda_i)/r);
+alpha = solucio.theta_lin(i) -  atan((lambda_c+lambda_i)/r);
 cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
 cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
 
-eqn = 8*(lamb+lambda_c)*lamb - ( (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c-lamb)/r) )-...
-    cd*sin(atan((lambda_c-lamb)/r)) )*solucio.sigma(i));
+eqn = 8*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
+    cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
 
 sol = solve(eqn,lamb);
 
-for j=1:4
+for j=1:length(sol)
     bool = isreal(double(sol(j)));
     if bool == 1
         sol_bona = double(sol(j));
@@ -228,7 +228,7 @@ lambda_i = double(sol_bona);
 end
 velocitat = lambda_i*datos.omega*datos.R;
 
-phi = atan((lambda_c-lambda_i)/r);
+phi = atan((lambda_c+lambda_i)/r);
 f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
 F = 2/pi*cos(exp(-f))^1;
 velocitat_p = velocitat*F; %velocitat_p : vel. + correcció Prandtl
