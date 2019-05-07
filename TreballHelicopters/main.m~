@@ -69,9 +69,6 @@ legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes d
 
 
 
-
-
-
 %% OPERACION Omega 
 
 % Ara sigma es coneguda, la corda tambe
@@ -168,73 +165,63 @@ end
 
 function [velocitat,velocitat_p] = Vi_BEM (datos,solucio,i)
 delta = 10;
+delta_p = 10;
 i 
 lambda_i = 3.5; %Per iniciar la iteracio suposem una lambda_i inicial
-while delta>10e-2
+while delta>10e-2 && delta_p>10e-2
 global aero
 syms lamb
 lambda_c = datos.Vc/(datos.omega*datos.R);
 r = datos.Y(i)/datos.R;
 
-%phi = atan((lambda_c-lamb)/r); 
-%alpha = solucio.theta_lin(i) - phi;
 
-%eqn = 8*(lamb+lambda_c)*lamb - ( (r^2+(lambda_c+lamb)^2)*(aero.cl(double(alpha(1)))*cos(phi)-...
-%   aero.cd(double(alpha(1)))*sin(phi))*solucio.sigma(i) );
-alpha = solucio.theta_lin(i) -  atan((lambda_c-lambda_i)/r);
+alpha = solucio.theta_lin(i) -  atan((lambda_c+lambda_i)/r);
 cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
 cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
 
-eqn = 8*(lamb+lambda_c)*lamb - ( (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c-lamb)/r) )-...
-    cd*sin(atan((lambda_c-lamb)/r)) )*solucio.sigma(i));
+phi = atan((lambda_c+lambda_i)/r);
+f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
+F = 2/pi*cos(exp(-f))^1;
+
+
+eqn = 8*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
+    cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
+
+eqn_p = 8*F*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
+    cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
 
 sol = solve(eqn,lamb);
+sol_p = solve(eqn_p,lamb);
 
-for j=1:4
+for j=1:length(sol)
     bool = isreal(double(sol(j)));
     if bool == 1
         sol_bona = double(sol(j));
     end
 end
 
-delta = abs(double(sol_bona)-lambda_i)
+for k=1:length(sol_p)
+    bool = isreal(double(sol_p(k)));
+    if bool == 1
+        sol_bona_p = double(sol_p(k));
+    end
+end
+
+delta = abs(double(sol_bona)-lambda_i);
+delta_p = abs(double(sol_bona_p)-lambda_p);
 
 lambda_i = double(sol_bona);
+lamdda_p = double(sol_p_bona);
 
 
 
-
-% %%Con pérdidas de Prandtl 
-% lambda_p = 0.5;
-% delta = 100;
-% while delta > 1e-20 %S'ha d'iterar
-%     phi = atan(lambda_p/(datos.Y(i)/datos.R)); 
-%     f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
-%     F = 2/pi*cos(exp(-f))^1;
-%     %lambda_pcalc = solucio.sigma(i)*aero.clalpha/(16*F)*(sqrt(1+(32*F)/(solucio.sigma(i)... %% Ha de ser CL_alfa no Cl
-%     %*aero.clalpha)*solucio.theta(i)*datos.Y(i)/datos.R)-1);
-%     
-%     syms lambda_i
-%     
-%     r = datos.Y(i)/datos.R;
-%     
-%     alpha = 10;
-%     sigma = solucio.sigma(i);
-%     
-%     dif = 8*(lambda_c + lambda_i)*F*lamba_i*r - ...
-%         (r^2 + (lambda_c+lambda_i)^2)*(cl(alpha)*cos(theta) - cd(alpha)*sin(theta))*sigma;
-%     
-%     delta = abs(lambda_pcalc - lambda_p);
-%     lambda_p = lambda_pcalc;
-% end
 
 end
-velocitat = lambda_i*datos.omega*datos.R;
 
-phi = atan((lambda_c-lambda_i)/r);
-f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
-F = 2/pi*cos(exp(-f))^1;
-velocitat_p = velocitat*F; %velocitat_p : vel. + correcció Prandtl
+
+velocitat = lambda_i*datos.omega*datos.R;
+velocitat_p = lambda_p*datos.omega*datos.R;
+
 end
 
 function [SIGMA, THETA] = BEM (datos, Y, param)
