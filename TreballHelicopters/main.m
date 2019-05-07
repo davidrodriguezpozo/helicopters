@@ -40,7 +40,7 @@ Corbes_Cl_Cd(ent)
 Vi_MTH (datos)
 
 
-datos.N = 200;
+datos.N = 17;
 r_root = 0.005;
 Y = linspace(r_root,datos.R,datos.N);
 
@@ -168,6 +168,7 @@ delta = 10;
 delta_p = 10;
 i 
 lambda_i = 3.5; %Per iniciar la iteracio suposem una lambda_i inicial
+lambda_p = 3.5;
 while delta>10e-2 && delta_p>10e-2
 global aero
 syms lamb
@@ -211,7 +212,7 @@ delta = abs(double(sol_bona)-lambda_i);
 delta_p = abs(double(sol_bona_p)-lambda_p);
 
 lambda_i = double(sol_bona);
-lambda_p = double(sol_p_bona);
+lambda_p = double(sol_bona_p);
 
 
 
