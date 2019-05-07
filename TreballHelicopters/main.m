@@ -4,7 +4,7 @@ clc
 
 % CONSTANTES DEL PROBLEMA
 datos.n_rotors = 4; %num de rotors
-datos.DL = 25;
+datos.DL = 80;
 datos.W = 0.5+0.7*0.2;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
