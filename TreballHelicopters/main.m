@@ -5,7 +5,7 @@ clc
 % CONSTANTES DEL PROBLEMA
 datos.n_rotors = 4; %num de rotors
 datos.DL = 80;
-datos.W = (0.5+0.7*0.2)*9.8;
+datos.W = 0.5+0.7*0.2;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
@@ -384,40 +384,4 @@ end
 
 
 function AirfoilPlot (ent)
-Airfoil = dlmread('airfoil_SC2110_coord.dat');
-
-k=1; 
-j=1; 
-cont = 0;
-
-for i=1:size(Airfoil,1)
-    
-    
-    if (Airfoil(i,1) > -0.001 && Airfoil(i,1) < 0.001)
-       cont =cont+1;
-    end
-    
-    if cont == 1
-       airfoil_up(j,1) = Airfoil(i,1);
-       airfoil_up(j,2) = Airfoil(i,2);
-       j=j+1;
-    else 
-       airfoil_low(k,1) = Airfoil(i,1);
-       airfoil_low(k,2) = Airfoil(i,2);
-       k=k+1;
-    end
-    
-
-end
-
-
-figure;
-plot(airfoil_up(:,1),airfoil_up(:,2),'b');
-hold on; axis equal; grid on;
-plot(airfoil_low(:,1),airfoil_low(:,2),'b');
-xlim([-0.1 1.1]);
-
-title ('Airfoil SC2110','Interpreter','latex','Fontsize',16);
-xlabel('X-axis [m]','Interpreter','latex','Fontsize',12);
-ylabel('Y-axis [m]','Interpreter','latex','Fontsize',12);
-end
+Airfoil = dlmread('airfoil_SC2110_c
