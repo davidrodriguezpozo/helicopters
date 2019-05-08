@@ -404,4 +404,40 @@ end
 
 
 function AirfoilPlot (ent)
-Airfoil = dlmread('airfoil_SC2110_c
+Airfoil = dlmread('airfoil_SC2110_coord.dat');
+
+k=1; 
+j=1; 
+cont = 0;
+
+for i=1:size(Airfoil,1)
+    
+    
+    if (Airfoil(i,1) > -0.001 && Airfoil(i,1) < 0.001)
+       cont =cont+1;
+    end
+    
+    if cont == 1
+       airfoil_up(j,1) = Airfoil(i,1);
+       airfoil_up(j,2) = Airfoil(i,2);
+       j=j+1;
+    else 
+       airfoil_low(k,1) = Airfoil(i,1);
+       airfoil_low(k,2) = Airfoil(i,2);
+       k=k+1;
+    end
+    
+
+end
+
+
+figure;
+plot(airfoil_up(:,1),airfoil_up(:,2),'b');
+hold on; axis equal; grid on;
+plot(airfoil_low(:,1),airfoil_low(:,2),'b');
+xlim([-0.1 1.1]);
+
+title ('Airfoil SC2110','Interpreter','latex','Fontsize',16);
+xlabel('X-axis [m]','Interpreter','latex','Fontsize',12);
+ylabel('Y-axis [m]','Interpreter','latex','Fontsize',12);
+end
