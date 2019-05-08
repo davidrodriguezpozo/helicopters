@@ -119,7 +119,7 @@ function BEM_lineal (datos)
 global solucio
 
 for i=1:datos.N
-    if ( datos.Y(i)/datos.R > 0.69 && datos.Y(i)/datos.R < 0.71)
+    if ( datos.Y(i)/datos.R > 0.69 && datos.Y(i)/datos.R < 0.73)
         m_1 = ( solucio.theta(i+1) - solucio.theta(i)) / (( datos.Y(i+1) - datos.Y(i))/datos.R);
         m_2 = ( solucio.sigma(i+1) - solucio.sigma(i)) / (( datos.Y(i+1) - datos.Y(i))/datos.R);
         solucio.theta_7 = solucio.theta(i);
