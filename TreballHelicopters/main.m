@@ -81,7 +81,7 @@ legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes d
 function [Omega] = NO_BEM (datos, solucio,i) 
 delta=10;
 delta_p=10;
-omega_ant=datos.omega;#suposem una omega inicial
+omega_ant=datos.omega;%suposem una omega inicial
 while delta>10^-3 && delta_p>10^-3
 omega=omega_ant;
 sumatori=0;  
