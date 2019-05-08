@@ -79,12 +79,32 @@ legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes d
 
 
 function [Omega] = NO_BEM (datos, solucio,i) 
-    
-Omega = 0:1:5000;
+delta=10;
+delta_p=10;
+omega_ant=datos.omega;#suposem una omega inicial
+while delta>10^-3 && delta_p>10^-3
+omega=omega_ant;
+sumatori=0;  
+sumatori_p=0;
+r = datos.Y/datos.R;
+lambda_Vc=datos.Vc/(omega*datos.R);
+lambda_Vi=solucio.vi/(omega*datos.R);
+alpha = solucio.theta_lin -  atan((lambda_Vc+lambda_Vi)/r);
+cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
+cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
+phi = atan((lambda_Vc+lambda_Vi)/r);
+for i=1:datos.N
+sumatori=sumatori+(solucio.sigma(i)*(datos.Y(i)^2+(lambda_Vc+lambda_Vi(i))^2)*(cl(i)*cos(phi(i))+cd(i)*sin(phi(i))))
+end
+syms om
+eq = 0.5*datos.nb*datos.R^4*pi*om*sumatori==0.25*datos.W*0.981
+omega_ant = solve(eq,om);
+delta = abs(omega-omega_ant);
+end
+disp(omega_ant)
 
-
-
-disp('aqui');
+%Omega = 0:1:5000;
+%disp('aqui');
 %fun = int(dFz) - W; 
 
 end
