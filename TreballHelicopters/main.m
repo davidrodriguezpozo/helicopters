@@ -5,7 +5,7 @@ clc
 % CONSTANTES DEL PROBLEMA
 datos.n_rotors = 4; %num de rotors
 datos.DL = 80;
-datos.W = 0.5+0.7*0.2;
+datos.W = (0.5+0.7*0.2)*9.8;
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 5; %Velocitat de climbing [m/s]
@@ -54,9 +54,10 @@ datos.Y = Y;
 clear Y
 
 BEM_lineal(datos)
+prandtl=true;
 
 for i=1:datos.N
-[solucio.vi(i), solucio.vi_p(i)] = Vi_BEM (datos, solucio,i);
+[solucio.vi(i), solucio.vi_p(i)] = Vi_BEM (datos, solucio,i,prandtl);
 end
 
 figure
@@ -163,37 +164,29 @@ end
 
 
 
-function [velocitat,velocitat_p] = Vi_BEM (datos,solucio,i)
+function [velocitat,velocitat_p] = Vi_BEM (datos,solucio,i,prandtl)
 delta = 10;
-delta_p = 10;
 i 
 lambda_i = 3.5; %Per iniciar la iteracio suposem una lambda_i inicial
-lambda_p = 3.5;
-while delta>10e-2 && delta_p>10e-2
+
+while delta>10e-2
 global aero
 syms lamb
 lambda_c = datos.Vc/(datos.omega*datos.R);
 r = datos.Y(i)/datos.R;
-
-
 alpha = solucio.theta_lin(i) -  atan((lambda_c+lambda_i)/r);
 cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
 cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
-
 phi = atan((lambda_c+lambda_i)/r);
 f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
-F = 2/pi*cos(exp(-f))^1;
+F = 2/pi*acos(exp(-f));
 
 
 eqn = 8*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
     cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
 
-eqn_p = 8*F*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
-    cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
-
 sol = solve(eqn,lamb);
-sol_p = solve(eqn_p,lamb);
-
+    
 for j=1:length(sol)
     bool = isreal(double(sol(j)));
     if bool == 1
@@ -201,29 +194,50 @@ for j=1:length(sol)
     end
 end
 
+delta = abs(double(sol_bona)-lambda_i);
+lambda_i = double(sol_bona);
+
+end
+
+if prandtl == true
+delta_p=10;
+lambda_p = 3.5;
+
+while delta_p>10e-2
+global aero
+syms lamb
+lambda_c = datos.Vc/(datos.omega*datos.R);
+r = datos.Y(i)/datos.R;
+alpha = solucio.theta_lin(i) -  atan((lambda_c+lambda_i)/r);
+cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
+cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
+phi = atan((lambda_c+lambda_i)/r);
+f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
+F = 2/pi*acos(exp(-f));
+eqn_p = 8*F*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
+    cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
+sol_p = solve(eqn_p,lamb);
+
 for k=1:length(sol_p)
     bool = isreal(double(sol_p(k)));
     if bool == 1
         sol_bona_p = double(sol_p(k));
     end
 end
-
-delta = abs(double(sol_bona)-lambda_i);
 delta_p = abs(double(sol_bona_p)-lambda_p);
-
-lambda_i = double(sol_bona);
 lambda_p = double(sol_bona_p);
-
-
-
-
 end
 
+end
 
 velocitat = lambda_i*datos.omega*datos.R;
+velocitat_p = 0;
+if prandtl == true
 velocitat_p = lambda_p*datos.omega*datos.R;
+end
 
 end
+
 
 function [SIGMA, THETA] = BEM (datos, Y, param)
     global param
