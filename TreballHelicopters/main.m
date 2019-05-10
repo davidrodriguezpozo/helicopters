@@ -361,7 +361,7 @@ coef = dlmread('Polar_SC2110.dat');
     aero.new_cd =new_cd;
     
     % Definim les funcions amb PCHIP
-    xq = -rad2deg(pi/4):5:rad2deg(pi/4);
+    xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
     %x_d = -rad2deg(pi/4):0.01:rad2deg(pi/4);
     aero.funcio_cl = pchip(new_alpha,new_cl,xq);
     aero.funcio_cd = pchip(new_alpha,new_cd,xq);
@@ -373,7 +373,7 @@ coef = dlmread('Polar_SC2110.dat');
     hold on;  grid on;
     plot(aero.alpha,aero.cl,'b');
     xlabel('$$\alpha$$ [$$^o$$]','Interpreter','latex','Fontsize',20);
-    ylabel('Lift coeficient $$C_l$$','Interpreter','latex','Fontsize',20);
+    ylabel('Lift coefficient $$C_l$$','Interpreter','latex','Fontsize',20);
     plot(aero.funcio_alpha,aero.funcio_cl,'*r');
     legend('Modified','Original','PCHIP','Interpreter','latex','Fontsize',14)
     
@@ -383,9 +383,27 @@ coef = dlmread('Polar_SC2110.dat');
     hold on; grid on;
     plot(aero.alpha,aero.cd,'b');
     xlabel('$$\alpha$$ [$$^o$$]','Interpreter','latex','Fontsize',20);
-    ylabel('Drag coeficient $$C_d$$','Interpreter','latex','Fontsize',20);
+    ylabel('Drag coefficient $$C_d$$','Interpreter','latex','Fontsize',20);
     plot(aero.funcio_alpha,aero.funcio_cd,'*r');
     legend('Modified','Original','PCHIP','Interpreter','latex','Fontsize',14)
+    
+    figure;
+    plot(new_cl,new_cd,'-.','Color','k');
+    title ('$$C_d$$ vs $$C_l$$','Interpreter','latex','Fontsize',24);
+    hold on; grid on;
+    plot(aero.cl,aero.cd,'b');
+    xlabel('Lift coefficient $$C_l$$','Interpreter','latex','Fontsize',20);
+    ylabel('Drag coefficient $$C_d$$','Interpreter','latex','Fontsize',20);
+    plot(aero.funcio_cl,aero.funcio_cd,'*r');
+    legend('Modified','Original','PCHIP','Interpreter','latex','Fontsize',14)
+    
+    figure;
+    plot(aero.cl,aero.cd,'b');
+    title ('$$C_d$$ vs $$C_l$$','Interpreter','latex','Fontsize',24);
+    xlabel('Lift coefficient $$C_l$$','Interpreter','latex','Fontsize',20);
+    ylabel('Drag coefficient $$C_d$$','Interpreter','latex','Fontsize',20);
+    grid on;
+    
     
     %clear aero.alpha 
     %aero.alpha = new_alpha;
