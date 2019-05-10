@@ -41,9 +41,9 @@ Corbes_Cl_Cd(ent)
 Vi_MTH (datos)
 
 
-datos.N = 17;
+datos.N = 100;
 r_root = 0.005;
-Y = linspace(r_root,datos.R,datos.N);
+Y = linspace(r_root , datos.R , datos.N);
 
 for i=1:datos.N
     [ solucio.sigma(i) , solucio.theta(i) ]= BEM(datos,Y(i));
@@ -54,8 +54,33 @@ end
 datos.Y = Y;
 clear Y
 
+
 BEM_lineal(datos)
-prandtl=true;
+
+
+%% Velocitat Induida, altra manera de ferho (sense solve)
+
+for i=1:datos.N
+[solucio.vi(i) solucio.alpha_vi(i) ] = Vi_BEM2 (datos, solucio,i);
+end
+global Vi_tip 
+Vi_tip = solucio.vi(datos.N);
+
+for i=1:datos.N
+[solucio.vi_p(i) solucio.alpha_vi_p(i) ] = Vi_BEM2_Pr (datos, solucio,i);
+end
+
+
+figure
+plot(datos.Y/datos.R, solucio.vi); hold on; 
+plot(datos.Y/datos.R, solucio.vi_p); grid on;
+title ('Velocitat inducida','Interpreter','latex','Fontsize',18);
+xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
+ylabel('Velocitat Inducida [m/s]','Interpreter','latex','Fontsize',16);
+legend('Velocitat inducida ideal','Velocitat inducida con correcciones de Prandtl');
+
+
+ prandtl=false;
 
 for i=1:datos.N
 [solucio.vi(i), solucio.vi_p(i)] = Vi_BEM (datos, solucio,i,prandtl);
@@ -114,6 +139,84 @@ end
 
 
 %% --- FUNCIONES ---
+
+function [Vi, alpha] = Vi_BEM2_Pr (datos, solucio, i)
+global aero
+global Vi_tip
+
+    alphas = -10:0.05:20;
+    % xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
+    lambda_c = datos.Vc / (datos.omega*datos.R);
+    r = datos.Y(i)/datos.R;
+    
+    dif = 0; DIF = 1000;
+    lambda_sol = 0;
+    
+    for j = 1:length(alphas)
+        lambda_i = (tan( solucio.theta_lin(i) - deg2rad(alphas(j)) ) - lambda_c )* r;
+        
+        phi = atan((lambda_c+lambda_i)/r);
+        
+        cl = pchip(aero.funcio_alpha,aero.funcio_cl , alphas(j));
+        cd = pchip(aero.funcio_alpha,aero.funcio_cd, alphas(j));
+        
+        lambda_i_tip = -abs(Vi_tip)/(datos.omega*datos.R);
+        
+        phi = atan((lambda_c+lambda_i_tip)/r);
+        
+        f = datos.nb/2 * ( 1 - datos.Y(i)/datos.R ) / ( (datos.Y(i)/datos.R) * phi);
+        F = 2/pi * acos(exp(-f));
+        
+    dif = 8*F*(lambda_i+lambda_c)*lambda_i*r - ( (r^2+(lambda_c+lambda_i)^2)*(cl*cos(phi) -...
+    cd*sin(phi)) *solucio.sigma(i) );
+
+    if (abs(dif) < abs(DIF)) && lambda_i > 0
+       lambda_sol = lambda_i;
+       DIF = abs(dif);
+       alpha_sol = alphas(j);
+    end
+        
+    end
+    
+    Vi = lambda_sol*datos.omega*datos.R;
+    alpha = alpha_sol;
+    
+end
+
+function [Vi, alpha] = Vi_BEM2 (datos, solucio, i)
+global aero
+
+    alphas = -10:0.05:20;
+    % xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
+    lambda_c = datos.Vc / (datos.omega*datos.R);
+    r = datos.Y(i)/datos.R;
+    
+    dif = 0; DIF = 1000;
+    lambda_sol = 0;
+    
+    for j = 1:length(alphas)
+        lambda_i = (tan( solucio.theta_lin(i) - deg2rad(alphas(j)) ) - lambda_c )* r;
+        
+        phi = atan((lambda_c+lambda_i)/r);
+        
+        cl = pchip(aero.funcio_alpha,aero.funcio_cl , alphas(j));
+        cd = pchip(aero.funcio_alpha,aero.funcio_cd, alphas(j));
+         
+    dif = 8*(lambda_i+lambda_c)*lambda_i*r - ( (r^2+(lambda_c+lambda_i)^2)*(cl*cos(phi) -...
+    cd*sin(phi)) *solucio.sigma(i) );
+
+    if (abs(dif) < abs(DIF)) && lambda_i > 0
+       lambda_sol = lambda_i;
+       DIF = abs(dif);
+       alpha_sol = alphas(j);
+    end
+        
+    end
+    
+    Vi = lambda_sol*datos.omega*datos.R;
+    alpha = alpha_sol;
+    
+end
 
 function BEM_lineal (datos)
 
@@ -315,24 +418,6 @@ coef = dlmread('Polar_SC2110.dat');
     end    
     
     fprintf('El coeficiente de cl_opt: %f  y el Ã¡ngulo de alpha_opt: %f \n',aero.cl_opt, aero.alp_opt);
-    
-%     figure;
-%     plot(alpha,cl);
-%     title ('$$C_l$$ vs $$\alpha$$','Interpreter','latex','Fontsize',16);
-%     xlabel('$$\alpha$$ [$$^o$$]','Interpreter','latex','Fontsize',12);
-%     ylabel('Lift coeficient $$C_l$$','Interpreter','latex','Fontsize',12);
-    
-%     figure;
-%     plot(cd,cl);
-%     title ('Polar plot','Interpreter','latex','Fontsize',16);
-%     xlabel('Lift coeficient $$C_l$$','Interpreter','latex','Fontsize',12);
-%     ylabel('Drag coeficient $$C_d$$','Interpreter','latex','Fontsize',12);
-%     
-%     figure;
-%     plot(cdp,alpha);
-%     title ('$$C_{dp}$$ vs $$\alpha$$','Interpreter','latex','Fontsize',16);
-%     xlabel('$$\alpha$$ [$$^o$$]','Interpreter','latex','Fontsize',12);
-%     ylabel('Parasit Drag coeficient $$C_l$$','Interpreter','latex','Fontsize',12);
     
     % Ens inventem punts per cl i cd per alpha propers a pi/2 ==> de cara
     % al fsolve (que segons el profe dona errors) a banda i banda per
