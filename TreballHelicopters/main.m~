@@ -41,8 +41,8 @@ Corbes_Cl_Cd(ent)
 Vi_MTH (datos)
 
 
-datos.N = 40;
-r_root = 0.005;
+datos.N = 50;
+r_root = 0.001;
 Y = linspace(r_root , datos.R , datos.N);
 
 for i=1:datos.N
@@ -63,8 +63,15 @@ BEM_lineal(datos)
 for i=1:datos.N
 [solucio.vi(i) solucio.alpha_vi(i) ] = Vi_BEM2 (datos, solucio,i);
 end
+global Vi_tip 
+global Vi_root
+Vi_tip = solucio.vi(datos.N);
+Vi_root = solucio.vi(1);
 
+for i=1:datos.N
 [solucio.vi_p(i) solucio.alpha_vi_p(i) ] = Vi_BEM2_Pr (datos, solucio,i);
+end
+
 
 figure
 plot(datos.Y/datos.R, solucio.vi); hold on; 
@@ -138,6 +145,7 @@ end
 function [Vi, alpha] = Vi_BEM2_Pr (datos, solucio, i)
 global aero
 global Vi_tip
+global Vi_root
 
     alphas = -10:0.05:20;
     % xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
@@ -150,20 +158,29 @@ global Vi_tip
     for j = 1:length(alphas)
         lambda_i = (tan( solucio.theta_lin(i) - deg2rad(alphas(j)) ) - lambda_c )* r;
         
+        %phi = atan((lambda_c+lambda_i)/r);
         phi = atan((lambda_c+lambda_i)/r);
         
         cl = pchip(aero.funcio_alpha,aero.funcio_cl , alphas(j));
         cd = pchip(aero.funcio_alpha,aero.funcio_cd, alphas(j));
         
-        phi = atan((lambda_c+lambda_i)/r);
+        %lambda_i_tip = abs(Vi_tip)/(datos.omega*datos.R);
+        %phi = atan((lambda_c+lambda_i_tip)/r);
         
-        f = datos.nb/2 * ( 1 - datos.Y(i)/datos.R ) / ( (datos.Y(i)/datos.R) * sin(phi));
-        F = 2/pi * acos(exp(-f));
+        %lambda_i_root = abs(Vi_root)/(datos.omega*datos.R);
+        %phi = atan((lambda_c+lambda_i_root)/r);
+        
+        f = datos.nb / 2 * ( 1 - datos.Y(i)/datos.R ) / ( (datos.Y(i)/datos.R) * sin(phi));
+        F = 2/pi * acos( exp(-f) );
+        
+        if F>1
+            disp('fatalisima');
+        end
         
     dif = 8*F*(lambda_i+lambda_c)*lambda_i*r - ( (r^2+(lambda_c+lambda_i)^2)*(cl*cos(phi) -...
     cd*sin(phi)) *solucio.sigma(i) );
 
-    if (abs(dif) < abs(DIF)) && lambda_i < 0
+    if (abs(dif) < abs(DIF)) && lambda_i > 0
        lambda_sol = lambda_i;
        DIF = abs(dif);
        alpha_sol = alphas(j);
@@ -198,7 +215,7 @@ global aero
     dif = 8*(lambda_i+lambda_c)*lambda_i*r - ( (r^2+(lambda_c+lambda_i)^2)*(cl*cos(phi) -...
     cd*sin(phi)) *solucio.sigma(i) );
 
-    if (abs(dif) < abs(DIF)) && lambda_i < 0
+    if (abs(dif) < abs(DIF)) && lambda_i > 0
        lambda_sol = lambda_i;
        DIF = abs(dif);
        alpha_sol = alphas(j);
@@ -330,6 +347,11 @@ cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
 phi = atan((lambda_c+lambda_i)/r);
 f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
 F = 2/pi*acos(exp(-f));
+
+if F>1
+    disp('fatalisimaaa');
+end
+
 eqn_p = 8*F*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
     cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
 sol_p = solve(eqn_p,lamb);

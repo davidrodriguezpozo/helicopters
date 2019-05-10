@@ -41,8 +41,8 @@ Corbes_Cl_Cd(ent)
 Vi_MTH (datos)
 
 
-datos.N = 100;
-r_root = 0.005;
+datos.N = 50;
+r_root = 0.001;
 Y = linspace(r_root , datos.R , datos.N);
 
 for i=1:datos.N
@@ -64,7 +64,9 @@ for i=1:datos.N
 [solucio.vi(i) solucio.alpha_vi(i) ] = Vi_BEM2 (datos, solucio,i);
 end
 global Vi_tip 
+global Vi_root
 Vi_tip = solucio.vi(datos.N);
+Vi_root = solucio.vi(1);
 
 for i=1:datos.N
 [solucio.vi_p(i) solucio.alpha_vi_p(i) ] = Vi_BEM2_Pr (datos, solucio,i);
@@ -143,6 +145,7 @@ end
 function [Vi, alpha] = Vi_BEM2_Pr (datos, solucio, i)
 global aero
 global Vi_tip
+global Vi_root
 
     alphas = -10:0.05:20;
     % xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
@@ -160,12 +163,18 @@ global Vi_tip
         cl = pchip(aero.funcio_alpha,aero.funcio_cl , alphas(j));
         cd = pchip(aero.funcio_alpha,aero.funcio_cd, alphas(j));
         
-        lambda_i_tip = -abs(Vi_tip)/(datos.omega*datos.R);
+        %lambda_i_tip = abs(Vi_tip)/(datos.omega*datos.R);
+        %phi = atan((lambda_c+lambda_i_tip)/r);
         
-        phi = atan((lambda_c+lambda_i_tip)/r);
+        %lambda_i_root = abs(Vi_root)/(datos.omega*datos.R);
+        %phi = atan((lambda_c+lambda_i_root)/r);
         
-        f = datos.nb/2 * ( 1 - datos.Y(i)/datos.R ) / ( (datos.Y(i)/datos.R) * phi);
-        F = 2/pi * acos(exp(-f));
+        f = datos.nb / 2 * ( 1 - datos.Y(i)/datos.R ) / ( (datos.Y(i)/datos.R) * sin(phi));
+        F = 2/pi * acos( exp(-f) );
+        
+        if F>1
+            disp('fatalisima');
+        end
         
     dif = 8*F*(lambda_i+lambda_c)*lambda_i*r - ( (r^2+(lambda_c+lambda_i)^2)*(cl*cos(phi) -...
     cd*sin(phi)) *solucio.sigma(i) );
@@ -337,6 +346,11 @@ cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
 phi = atan((lambda_c+lambda_i)/r);
 f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
 F = 2/pi*acos(exp(-f));
+
+if F>1
+    disp('fatalisimaaa');
+end
+
 eqn_p = 8*F*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
     cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
 sol_p = solve(eqn_p,lamb);
