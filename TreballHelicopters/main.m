@@ -5,14 +5,15 @@ clc
 % CONSTANTES DEL PROBLEMA
 datos.n_rotors = 4; %num de rotors
 datos.DL = 80;
-datos.W = 0.5+0.7*0.2;
+datos.W = 9.8 * (0.5+0.7*0.2);
 datos.R = sqrt(datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
-datos.Vc = 5; %Velocitat de climbing [m/s]
+datos.Vc = 0; %Velocitat de climbing [m/s]
 datos.nb = 2; % num de pales
 
 datos.Mtip = 0.5; 
-datos.T = 288.15; % ISA
+datos.alt = 1500 + 30;
+datos.T = 273 + 15 - (6.5/1000 * datos.alt); % ISA [K]
 datos.Rg = 287; 
 datos.gamma = 1.4;
 datos.a = sqrt(datos.gamma * datos.Rg * datos.T);
@@ -137,39 +138,38 @@ end
 
 
 figure
-plot(datos.Y/datos.R, solucio.corda_lin*100);
+plot(datos.Y/datos.R, solucio.corda_lin*100); grid on;
 title ('Cuerda obtenida mediante método linealizado','Interpreter','latex','Fontsize',18);
-xlabel('R','Interpreter','latex','Fontsize',16);
-ylabel('cuerda linealizada [cm]','Interpreter','latex','Fontsize',16);
+xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
+ylabel('Cuerda [cm]','Interpreter','latex','Fontsize',16);
 
 
 figure
-plot(datos.Y/datos.R, rad2deg(solucio.theta_lin));
-hold on
 plot(datos.Y/datos.R, rad2deg(solucio.theta));
-
-title ('$$\theta$$ linealitzada y ideal','Interpreter','latex','Fontsize',18);
-hold on;
+hold on; grid on;
+plot(datos.Y/datos.R, rad2deg(solucio.theta_lin),'-.');
+title ('$$\theta$$ ideal y linealizada','Interpreter','latex','Fontsize',24);
 xlabel('R','Interpreter','latex','Fontsize',16);
-ylabel('$$\theta$$[deg]','Interpreter','latex','Fontsize',16);
-legend('Linealitzada','Ideal','Interpreter','latex');
+ylabel('$$\theta$$ [deg]','Interpreter','latex','Fontsize',16);
+legend('Ideal','Linealizada','Interpreter','latex','Fontsize',16);
 
 
 figure
 plot(datos.Y/datos.R,solucio.sigma);
-title ('$$\sigma$$ ideal y linealizada','Interpreter','latex','Fontsize',18);
-hold on;
-plot(datos.Y/datos.R,solucio.sigma_lin);
-xlabel('R','Interpreter','latex','Fontsize',16);
+title ('$$\sigma$$ ideal y linealizada','Interpreter','latex','Fontsize',24);
+hold on;  grid on;
+plot(datos.Y/datos.R,solucio.sigma_lin,'-.');
+xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
 ylabel('$$\sigma$$','Interpreter','latex','Fontsize',16);
-legend('Linealitzada','Ideal','Interpreter','latex');
+legend('Ideal','Linealizada','Interpreter','latex','Fontsize',16);
 
 
 figure
-plot( datos.Y/datos.R , rad2deg(solucio.theta) );
-title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',18);
-hold on;
-xlabel('R','Interpreter','latex','Fontsize',16);
+plot( datos.Y/datos.R , rad2deg(solucio.theta));
+hold on;  grid on;
+plot( datos.Y/datos.R , rad2deg(solucio.theta_lin),'-.');
+title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',20);
+xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
 ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
 
 end
@@ -355,30 +355,37 @@ coef = dlmread('Polar_SC2110.dat');
     new_alpha(N+1) = 45-15; new_cl(N+1) = 0.5; new_cd(N+1) = 0.3;
     new_alpha(N+2) = 45-5; new_cl(N+2) = 0.1; new_cd(N+2) = 0.7;
     new_alpha(N+3) = 45; new_cl(N+3) = 0.0; new_cd(N+3) = 1;
-   
-    
-    figure
-    plot(new_alpha,new_cd);
     
     aero.new_cl =new_cl;
     aero.new_alpha =new_alpha;
     aero.new_cd =new_cd;
     
     % Definim les funcions amb PCHIP
-    xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
+    xq = -rad2deg(pi/4):5:rad2deg(pi/4);
     %x_d = -rad2deg(pi/4):0.01:rad2deg(pi/4);
     aero.funcio_cl = pchip(new_alpha,new_cl,xq);
     aero.funcio_cd = pchip(new_alpha,new_cd,xq);
     aero.funcio_alpha = xq;
     
     figure;
-    plot(new_alpha,new_cl,'-.','Color','b');
-    title ('$$C_l$$ vs $$\alpha$$ modified','Interpreter','latex','Fontsize',16);
-    hold on;
+    plot(new_alpha,new_cl,'-.','Color','k');
+    title ('$$C_l$$ vs $$\alpha$$','Interpreter','latex','Fontsize',24);
+    hold on;  grid on;
     plot(aero.alpha,aero.cl,'b');
-    legend('Modified','Original')
-    xlabel('$$\alpha$$ [$$^o$$]','Interpreter','latex','Fontsize',12);
-    ylabel('Lift coeficient $$C_l$$','Interpreter','latex','Fontsize',12);
+    xlabel('$$\alpha$$ [$$^o$$]','Interpreter','latex','Fontsize',20);
+    ylabel('Lift coeficient $$C_l$$','Interpreter','latex','Fontsize',20);
+    plot(aero.funcio_alpha,aero.funcio_cl,'*r');
+    legend('Modified','Original','PCHIP','Interpreter','latex','Fontsize',14)
+    
+    figure;
+    plot(new_alpha,new_cd,'-.','Color','k');
+    title ('$$C_d$$ vs $$\alpha$$','Interpreter','latex','Fontsize',24);
+    hold on; grid on;
+    plot(aero.alpha,aero.cd,'b');
+    xlabel('$$\alpha$$ [$$^o$$]','Interpreter','latex','Fontsize',20);
+    ylabel('Drag coeficient $$C_d$$','Interpreter','latex','Fontsize',20);
+    plot(aero.funcio_alpha,aero.funcio_cd,'*r');
+    legend('Modified','Original','PCHIP','Interpreter','latex','Fontsize',14)
     
     %clear aero.alpha 
     %aero.alpha = new_alpha;
@@ -437,7 +444,8 @@ hold on; axis equal; grid on;
 plot(airfoil_low(:,1),airfoil_low(:,2),'b');
 xlim([-0.1 1.1]);
 
-title ('Airfoil SC2110','Interpreter','latex','Fontsize',16);
+title ('Airfoil SC2110','Interpreter','latex','Fontsize',24);
 xlabel('X-axis [m]','Interpreter','latex','Fontsize',12);
 ylabel('Y-axis [m]','Interpreter','latex','Fontsize',12);
+%axis off;
 end
