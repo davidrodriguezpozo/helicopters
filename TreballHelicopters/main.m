@@ -64,10 +64,10 @@ end
 figure
 plot(datos.Y/datos.R, solucio.vi); hold on;
 plot(datos.Y/datos.R, solucio.vi_p);
-title ('Velocitat induida','Interpreter','latex','Fontsize',18);
-xlabel('R','Interpreter','latex','Fontsize',16);
-ylabel('Velocitat Induida [m/s]','Interpreter','latex','Fontsize',16);
-legend('Velocitat induida ideal','Velocitat induida amb correcció per efectes de Prandtl');
+title ('Velocitat inducida','Interpreter','latex','Fontsize',18);
+xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
+ylabel('Velocitat Inducida [m/s]','Interpreter','latex','Fontsize',16);
+legend('Velocitat inducida ideal','Velocitat inducida con correcciones de Prandtl');
 
 
 
@@ -149,7 +149,7 @@ plot(datos.Y/datos.R, rad2deg(solucio.theta));
 hold on; grid on;
 plot(datos.Y/datos.R, rad2deg(solucio.theta_lin),'-.');
 title ('$$\theta$$ ideal y linealizada','Interpreter','latex','Fontsize',24);
-xlabel('R','Interpreter','latex','Fontsize',16);
+xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
 ylabel('$$\theta$$ [deg]','Interpreter','latex','Fontsize',16);
 legend('Ideal','Linealizada','Interpreter','latex','Fontsize',16);
 
@@ -164,13 +164,13 @@ ylabel('$$\sigma$$','Interpreter','latex','Fontsize',16);
 legend('Ideal','Linealizada','Interpreter','latex','Fontsize',16);
 
 
-figure
-plot( datos.Y/datos.R , rad2deg(solucio.theta));
-hold on;  grid on;
-plot( datos.Y/datos.R , rad2deg(solucio.theta_lin),'-.');
-title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',20);
-xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
-ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
+% figure
+% plot( datos.Y/datos.R , rad2deg(solucio.theta));
+% hold on;  grid on;
+% plot( datos.Y/datos.R , rad2deg(solucio.theta_lin),'-.');
+% title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',20);
+% xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
+% ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
 
 end
 
