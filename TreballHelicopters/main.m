@@ -42,7 +42,7 @@ Vi_MTH (datos)
 
 
 datos.N = 50;
-r_root = 0.001;
+r_root = 0.001; % [m]
 Y = linspace(r_root , datos.R , datos.N);
 
 for i=1:datos.N
@@ -179,7 +179,7 @@ global Vi_root
     dif = 8*F*(lambda_i+lambda_c)*lambda_i*r - ( (r^2+(lambda_c+lambda_i)^2)*(cl*cos(phi) -...
     cd*sin(phi)) *solucio.sigma(i) );
 
-    if (abs(dif) < abs(DIF)) && lambda_i > 0
+    if (abs(dif) < abs(DIF)) %%&& lambda_i > 0
        lambda_sol = lambda_i;
        DIF = abs(dif);
        alpha_sol = alphas(j);
@@ -290,7 +290,7 @@ function Vi_MTH (datos)
 global param
     % T = datos.W;
     A = pi*datos.R^2;
-    param.Vi = sqrt(0.25*datos.W*9.81/(2 * datos.rho * A)); %0.25*W perque hi ha 4 rotors
+    param.Vi = sqrt(0.25*datos.W/(2 * datos.rho * A)); %0.25*W perque hi ha 4 rotors
 
 end
 
