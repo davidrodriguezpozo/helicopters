@@ -185,7 +185,7 @@ end
 function POTENCIA = Power(datos,solucio)
 global aero
 
-    Integral = 0; 
+    Integral = 0; Integral2 = 0; 
     delta = datos.R / datos.N;
     omega = solucio.omega;
     
@@ -194,6 +194,7 @@ global aero
         r = datos.Y(j)/datos.R; 
         cl = aero.funcio_cl(solucio.indice(j));
         cd = aero.funcio_cd(solucio.indice(j));
+        cdp = aero.funcio_cdp(solucio.indice(j));
         lambda_c = datos.Vc / (omega*datos.R);
         lambda_i = solucio.lambda_i(j);
 
@@ -207,7 +208,10 @@ global aero
             dT = 2 * datos.rho * omega^2 * datos.R^2 * lambda_i * ...
                 (lambda_c + lambda_i)* datos.R^2 * 2 * datos.Y(j)/datos.R;
             
+            dD_par = 1/2 * datos.rho * (lambda_c + lambda_i) * cdp; % QUINA ES LA FORMULA
+            
         Integral = Integral + dT * delta *(solucio.vi(j)+datos.Vc); 
+        Integral2 = Integral2 + dD_par * delta *(solucio.vi(j)+datos.Vc); 
         
     end
     POTENCIA = Integral;
@@ -621,6 +625,7 @@ coef = dlmread('Polar_SC2110.dat');
     %x_d = -rad2deg(pi/4):0.01:rad2deg(pi/4);
     aero.funcio_cl = pchip(new_alpha,new_cl,xq);
     aero.funcio_cd = pchip(new_alpha,new_cd,xq);
+    aero.funcio_cdp = pchip(new_alpha,new_cd,xq);
     aero.funcio_alpha = xq;
     
 %     figure;
