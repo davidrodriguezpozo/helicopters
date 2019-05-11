@@ -117,10 +117,17 @@ toc
 
 disp(datos.omega);
 disp(Omega);
+solucio.omega = Omega;
+
+fprintf('Velocidad angular: %f \n',Omega);
+
+Potencia = Power (datos, solucio);
+
+fprintf('Potencia: %f \n',Potencia);
 
 disp('FIN');
 
-function OMEGA = NO_BEM2 (datos, solucio);
+function OMEGA = NO_BEM2 (datos, solucio)
 global aero 
 
     Omegas = 1:0.25:5000;
@@ -151,7 +158,6 @@ global aero
             
             lambda_i = solucio.vi_m(j) / (omega*datos.R);
             
-            
             phi = solucio.phi_BEM(j);
             sigma = solucio.sigma_lin(j);
             chord = solucio.corda_lin(j);
@@ -176,6 +182,36 @@ global aero
     OMEGA = omega_sol;
 end
 
+function POTENCIA = Power(datos,solucio)
+global aero
+
+    Integral = 0; 
+    delta = datos.R / datos.N;
+    omega = solucio.omega;
+    
+    for j = 1:datos.N
+        
+        r = datos.Y(j)/datos.R; 
+        cl = aero.funcio_cl(solucio.indice(j));
+        cd = aero.funcio_cd(solucio.indice(j));
+        lambda_c = datos.Vc / (omega*datos.R);
+        lambda_i = solucio.lambda_i(j);
+
+            phi = solucio.phi_BEM(j);
+            sigma = solucio.sigma_lin(j);
+            chord = solucio.corda_lin(j);
+            
+            F=1;
+            
+            % De les diapos 
+            dT = 2 * datos.rho * omega^2 * datos.R^2 * lambda_i * ...
+                (lambda_c + lambda_i)* datos.R^2 * 2 * datos.Y(j)/datos.R;
+            
+        Integral = Integral + dT * delta *(solucio.vi(j)+datos.Vc); 
+        
+    end
+    POTENCIA = Integral;
+end
 
 function [Omega] = NO_BEM (datos, solucio,i) 
 delta=10;
