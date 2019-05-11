@@ -8,8 +8,7 @@ tic
 datos.n_rotors = 4; %num de rotors
 datos.DL = 80; % DL = W/A 
 datos.W = 9.8 * (0.5+0.7*0.2);
-datos.R = sqrt( (datos.W/4) / (datos.DL * pi)); %radi del rotor
-    %datos.R = sqrt( datos.W / (datos.DL * pi)); %radi del rotor
+datos.R = sqrt( datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 0; %Velocitat de climbing [m/s]
 datos.nb = 2; % num de pales
@@ -113,6 +112,7 @@ toc
 % Ara sigma es coneguda, la corda tambe
 % La velocitat induida no
 
+%[Omega] = NO_BEM (datos, solucio,i);
 
 [Omega] = NO_BEM2 (datos, solucio);
 
@@ -124,19 +124,20 @@ disp('FIN');
 function OMEGA = NO_BEM2 (datos, solucio);
 global aero 
 
-    Omegas = 1500:0.5:15000;
+    Omegas = 1:0.5:5000;
     
     % Ara es coneguda: theta, sigma
     % Vi ?
-    i=1;
-    delta = datos.R / datos.N;
     
+    delta = datos.R / datos.N;
     dif = 0; DIF = -1000;
     
     for i = 1:length(Omegas)
         Integral = 0;
         
         for j = 1:datos.N
+            
+            omega = Omegas(i);
             
             %[Vi,lambda_i,phi] = Vi_BEM3 (datos, solucio, i, Omegas(i))
             r = datos.Y(j)/datos.R; 
@@ -149,7 +150,8 @@ global aero
             sigma = solucio.sigma(j);
             chord = solucio.corda_lin(j);
             
-            dFz = 1/2 * datos.rho * Omegas(i)^2 * datos.R^2 ...
+            % De les diapos 
+            dFz = 1/2 * datos.rho * omega^2 * datos.R^2 ...
                 *((r^2+(lambda_c+lambda_i)^2) * ...
                 datos.nb * chord *(cl*cos(phi) - cd*sin(phi))) * datos.R;
             
@@ -168,68 +170,6 @@ global aero
     OMEGA = omega_sol;
 end
 
-
-%[Omega] = NO_BEM (datos, solucio,i);
-
-
-function [Vi, LAMBDA, PHI] = Vi_BEM3 (datos, solucio, i, OMEGA)
-global aero
-
-    alphas = -10:0.001:20;
-    % xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
-    lambda_c = datos.Vc / (OMEGA*datos.R);
-    r = datos.Y(i)/datos.R;
-    
-    dif = 0;  DIF = 1000;
-    lambda_sol = 0;
-    trobat = 0; delta = 10^-5;
-    
-    j = 1;
-    
-    while j <= length(alphas) && trobat == 0
-        lambda_i = (tan( solucio.theta_lin(i) - deg2rad(alphas(j)) ) - lambda_c )* r;
-        
-        phi = atan((lambda_c+lambda_i)/r);
-        
-        %cl = pchip(aero.funcio_alpha,aero.funcio_cl , alphas(j)); %Interpola per trobar cl per aquell angle
-        %cd = pchip(aero.funcio_alpha,aero.funcio_cd, alphas(j)); %Interpola per trobar cd per aquell angle
-        
-        % VA MOLT LENT AMB PCHIP = si els coeficients de alphes van igual en
-        % aero.funcio_cl = puc fer cl(j) 
-        % S'HA DE FER QUE ALPHAS = AERO.funcioalphas = OJOOOO!!
-        
-        cl = aero.funcio_cl(j); cd = aero.funcio_cd(j);
-        
-        num1 = 8*(lambda_i+lambda_c)*lambda_i*r;
-        num2 = ((r^2+(lambda_c+lambda_i)^2)*(cl*cos(phi) - cd*sin(phi))) *solucio.sigma(i);
-        
-    dif = num1 - num2;
-
-    if (abs(dif) < abs(DIF)) && lambda_i > 0 %% SI NO ENS QUEDEM AMB EL MÉS PETIT    
-        lambda_sol = lambda_i;
-       DIF = abs(dif);
-       alpha_sol = alphas(j);
-    end
-    
-       if (abs(dif) < delta)
-           lambda_sol = lambda_i;
-           alpha_sol = alphas(j); 
-           phi_sol = phi; 
-           trobat = 1;
-           ind = j;
-       end
-    
-        j=j+1;
-    
-    end
-    
-    Vi = lambda_sol*OMEGA*datos.R;
-    ALPHA = alpha_sol;
-    LAMBDA = lambda_sol;
-    PHI = phi_sol;
-    IND = ind;
-    
-end
 
 function [Omega] = NO_BEM (datos, solucio,i) 
 delta=10;
