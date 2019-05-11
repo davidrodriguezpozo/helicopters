@@ -69,7 +69,6 @@ F_root = 2/pi * acos( exp(-f_root) );
 %F = F_tip;
 F = F_tip*F_root;
 
-
 solucio.vi_p(i) = solucio.vi(i) * F;
 
 % CONSTRUIM SOLUCIO DE MTH
@@ -124,7 +123,7 @@ disp('FIN');
 function OMEGA = NO_BEM2 (datos, solucio);
 global aero 
 
-    Omegas = 1:0.5:5000;
+    Omegas = 1:0.25:5000;
     
     % Ara es coneguda: theta, sigma
     % Vi ?
@@ -143,11 +142,18 @@ global aero
             r = datos.Y(j)/datos.R; 
             cl = aero.funcio_cl(solucio.indice(j));
             cd = aero.funcio_cd(solucio.indice(j));
-            %lambda_c = datos.Vc / (Omegas(i)*datos.R);
+            %lambda_c = datos.Vc / (omega*datos.R);
             lambda_c = 0;
             lambda_i = solucio.lambda_i(j);
+            
+            %lambda_i = solucio.vi_p(j) / (omega*datos.R);
+            %lambda_i = solucio.vi(j) / (omega*datos.R);
+            
+            lambda_i = solucio.vi_m(j) / (omega*datos.R);
+            
+            
             phi = solucio.phi_BEM(j);
-            sigma = solucio.sigma(j);
+            sigma = solucio.sigma_lin(j);
             chord = solucio.corda_lin(j);
             
             % De les diapos 
