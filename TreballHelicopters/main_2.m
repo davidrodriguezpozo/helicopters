@@ -8,7 +8,6 @@ datos.n_rotors = 4; %num de rotors
 datos.DL = 80; % DL = W/A 
 datos.W = 9.8 * ( 0.5+0.7*0.2);
 datos.R = sqrt( datos.W / (datos.DL * pi)); %radi del rotor
-datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 
 datos.Vc = 0.0; %Velocitat de climbing [m/s]
 %datos.Vc = -2.5; %Velocitat de climbing [m/s]
@@ -20,6 +19,7 @@ datos.nb = 2; % num de pales
 datos.Mtip = 0.5; 
 datos.alt = 1500 + 30;
 datos.T = 273 + 15 - (6.5/1000 * datos.alt); % ISA [K]
+datos.rho = 1.225*(datos.T/288.15)^(5.265-1); %ISA [kg/m^3]
 datos.Rg = 287; 
 datos.gamma = 1.4;
 datos.a = sqrt(datos.gamma * datos.Rg * datos.T);
@@ -437,6 +437,11 @@ global solucio
     % T = datos.W;
     A = pi*datos.R^2;
     solucio.Vi_mth = sqrt(0.25*datos.W/(2 * datos.rho * A)); %0.25*W perque hi ha 4 rotors
+    solucio.Cl_mth = (0.25*datos.W)/(0.5 * datos.rho * solucio.Vi_mth^2 * A)
+    Vc = [0, 2.5, 5, 7.5];
+    for i = 1:length(Vc)
+        solucio.Pi_mth(i) = 0.25*datos.W*(solucio.Vi_mth+Vc(i))
+    end
 
 end
 
