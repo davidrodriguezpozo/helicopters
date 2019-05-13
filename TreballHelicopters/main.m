@@ -450,7 +450,9 @@ global solucio
     % T = datos.W;
     A = pi*datos.R^2;
     solucio.Vi_mth = sqrt(0.25*datos.W/(2 * datos.rho * A)); %0.25*W perque hi ha 4 rotors
-
+    solucio.Cl_mth = 0.25*datos.W/(0.5*datos.rho*19.3119^2*A)
+    solucio.Pi_mth = datos.W*0.25*solucio.Vi_mth
+    solucio.Pi_mth_vc = datos.W*0.25*(solucio.Vi_mth+5)
 end
 
 
