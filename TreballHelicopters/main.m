@@ -9,13 +9,13 @@ datos.n_rotors = 4; %num de rotors
 datos.DL = 80; % DL = W/A 
 datos.W = 9.8 * (0.5+0.7*0.2);
 datos.R = sqrt( datos.W / (datos.DL * pi)); %radi del rotor
-datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 datos.Vc = 0; %Velocitat de climbing [m/s]
 datos.nb = 2; % num de pales
 
 datos.Mtip = 0.5; 
 datos.alt = 1500 + 30;
 datos.T = 273 + 15 - (6.5/1000 * datos.alt); % ISA [K]
+datos.rho = 1.225*(datos.T/288.15)^(5.265-1); %ISA [kg/m^3]
 datos.Rg = 287; 
 datos.gamma = 1.4;
 datos.a = sqrt(datos.gamma * datos.Rg * datos.T);
