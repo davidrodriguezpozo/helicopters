@@ -1,5 +1,4 @@
-clear all % NO HO FEM PER NO HAVER DE RECALCULAR THETA I SIGMA SEMPRE - si
-%no triga molt :( 
+clear all 
 close all
 clc
 tic
@@ -7,7 +6,7 @@ tic
 % CONSTANTES DEL PROBLEMA
 datos.n_rotors = 4; %num de rotors
 datos.DL = 80; % DL = W/A 
-datos.W = 9.8 * (0.5+0.7*0.2);
+datos.W = 9.8 * ( 0.5+0.7*0.2);
 datos.R = sqrt( datos.W / (datos.DL * pi)); %radi del rotor
 datos.rho = 1.225; %densitat de l'aire [kg/m^3]
 
@@ -28,7 +27,7 @@ datos.a = sqrt(datos.gamma * datos.Rg * datos.T);
 datos.omega = datos.Mtip * datos.a / datos.R;
 
 global inc_graus
-    inc_graus = 0.05;
+    inc_graus = 0.1;
 global delta 
     delta = 10^-3; % pel calcul de Velocitat induides (DEPEN BASTANT DE inc_graus)
 global delta2 
@@ -102,6 +101,10 @@ legend('MTH','BEM','BEM + Pérdidas','Location','Southwest');
 
 % EL ROTOR ES DISSENYA (corda, sigma...)  PER A Vc = 0, ara la omega variara
 
+%fprintf(' \n \n    MTH -------- \n ');
+fprintf(' \n \n    BEM -------- \n');
+%fprintf(' \n \n    BEM+perdidas -------- \n ');
+
 Vcs = [0 2.5 5 7.5];
 
 % Ara sigma es coneguda, la corda tambe
@@ -126,7 +129,8 @@ for i=1:length(Vcs)
     
 end
 
-plo
+figure;
+plot (Omega(i),Potencia+Pot_paras);
 
 disp('FIN');
 
@@ -156,6 +160,28 @@ global aero
             for  j= 1:datos.N
                 [ Vi_2(j) lambda_i_2(j) phi_2(j) alpha_2(j) ind_2(j) ] = Vi_BEM3 (datos, solucio, omega, j);
                 
+                % MTH
+                
+                
+                % BEM+PERDUES (posar % quan no es vulgui fer perdues)
+                
+                        phi = solucio.phi_2(j);
+                        f_tip = datos.nb / 2 * ( 1 - datos.Y(j)/datos.R ) / ( (datos.Y(j)/datos.R) * sin(phi));
+                        F_tip = 2/pi * acos( exp(-f_tip) );  
+
+                        r_root = datos.Y(1)/datos.R;
+
+                        f_root = datos.nb / 2 * ( datos.Y(j)/datos.R - r_root ) / ( (datos.Y(j)/datos.R) * sin(phi));
+                        F_root = 2/pi * acos( exp(-f_root) );  
+
+                        %F = F_tip;
+                        F = F_tip*F_root;
+
+                        solucio.vi_p(i) = solucio.vi(i) * F;
+                
+                
+                
+                % BEM 
                 r = datos.Y(j)/datos.R; 
                 cl = aero.funcio_cl(ind_2(j));
                 cd = aero.funcio_cd(ind_2(j));

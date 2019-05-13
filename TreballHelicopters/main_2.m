@@ -1,6 +1,6 @@
-clear all 
-close all
-clc
+% clear all 
+ close all
+%clc
 tic
 
 % CONSTANTES DEL PROBLEMA
@@ -101,9 +101,9 @@ legend('MTH','BEM','BEM + Pérdidas','Location','Southwest');
 
 % EL ROTOR ES DISSENYA (corda, sigma...)  PER A Vc = 0, ara la omega variara
 
-%fprintf(' \n \n    MTH -------- \n ');
-fprintf(' \n \n    BEM -------- \n');
-%fprintf(' \n \n    BEM+perdidas -------- \n ');
+% fprintf(' \n \n    MTH -------- \n ');
+% fprintf(' \n \n    BEM -------- \n');
+ fprintf(' \n \n    BEM+perdidas -------- \n ');
 
 Vcs = [0 2.5 5 7.5];
 
@@ -130,7 +130,7 @@ for i=1:length(Vcs)
 end
 
 figure;
-plot (Omega(i),Potencia+Pot_paras);
+plot (Omega,Potencia+Pot_paras);
 
 disp('FIN');
 
@@ -163,21 +163,40 @@ global aero
                 % MTH
                 
                 
-                % BEM+PERDUES
+                % BEM+PERDUES (posar % quan no es vulgui fer perdues per estalviar calculs)
                 
+%                         phi = phi_2(j);
+%                         f_tip = datos.nb / 2 * ( 1 - datos.Y(j)/datos.R ) / ( (datos.Y(j)/datos.R) * sin(phi));
+%                         F_tip = 2/pi * acos( exp(-f_tip) );  
+% 
+%                         r_root = datos.Y(1)/datos.R;
+% 
+%                         f_root = datos.nb / 2 * ( datos.Y(j)/datos.R - r_root ) / ( (datos.Y(j)/datos.R) * sin(phi));
+%                         F_root = 2/pi * acos( exp(-f_root) );  
+% 
+%                         %F = F_tip;
+%                         F = F_tip*F_root;
+% 
+%                         solucio.vi_p(j) = Vi_2(j) * F;
+%                 
+%                 % BEM 
+%                 r = datos.Y(j)/datos.R; 
+%                 cl = aero.funcio_cl(ind_2(j));
+%                 cd = aero.funcio_cd(ind_2(j));
+%             
+%                 lambda_c = datos.Vc/(omega*datos.R); %S'ha de calcular 
+%                 
+%                 phi = phi_2(j); %S'ha de calcular 
                 
+                %% CALCUL DE LAMBDA ( BEM i BEM + perdues, MTH a part)
                 
+                   %BEM
+                lambda_i = lambda_i_2(j); %S'ha de calcular
+                   %BEM + perdues
+                %lambda_i = solucio.vi_p(j)/(omega*datos.R); 
                 
+                %%
                 
-                % BEM 
-                r = datos.Y(j)/datos.R; 
-                cl = aero.funcio_cl(ind_2(j));
-                cd = aero.funcio_cd(ind_2(j));
-            
-                lambda_c = datos.Vc/(omega*datos.R); %S'ha de calcular 
-                
-                phi = phi_2(j); %S'ha de calcular 
-                lambda_i = lambda_i_2(j); %S'ha de calcular 
                 sigma = solucio.sigma_lin(j); %LA CALCULADA 
                 chord = solucio.corda_lin(j); %LA CALCULADA 
                 
@@ -241,37 +260,6 @@ global aero
     POT_PAR = Integral2;
 end
 
-function [Omega] = NO_BEM (datos, solucio,i) 
-delta=10;
-delta_p=10;
-omega_ant=datos.omega;%suposem una omega inicial
-while delta>10^-3 && delta_p>10^-3
-omega=omega_ant;
-sumatori=0;  
-sumatori_p=0;
-r = datos.Y/datos.R;
-lambda_Vc=datos.Vc/(omega*datos.R);
-lambda_Vi=solucio.vi/(omega*datos.R);
-alpha = solucio.theta_lin -  atan((lambda_Vc+lambda_Vi)/r);
-cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
-cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
-phi = atan((lambda_Vc+lambda_Vi)/r);
-for i=1:datos.N
-sumatori=sumatori+(solucio.sigma(i)*(datos.Y(i)^2+(lambda_Vc+lambda_Vi(i))^2)*(cl(i)*cos(phi(i))+cd(i)*sin(phi(i))))
-end
-syms om
-eq = 0.5*datos.nb*datos.R^4*pi*om*sumatori==0.25*datos.W*0.981
-omega_ant = solve(eq,om);
-delta = abs(omega-omega_ant);
-end
-disp(omega_ant)
-
-%Omega = 0:1:5000;
-%disp('aqui');
-%fun = int(dFz) - W; 
-
-end
-
 function [Vi, LAMBDA, PHI, ALPHA, IND] = Vi_BEM3 (datos, solucio, omega, i)
 global aero
 global delta
@@ -323,81 +311,6 @@ global inc_graus
     LAMBDA = lambda_sol;
     PHI = phi_sol;
     IND = ind;
-end
-
-function [Vi, alpha] = Vi_BEM2_Pr (datos, solucio, i)
-global aero
-global Vi_tip
-global Vi_root
-
-    alphas = -10:0.001:20;
-    % xq = -rad2deg(pi/4):0.05:rad2deg(pi/4);
-    lambda_c = datos.Vc / (datos.omega*datos.R);
-    r = datos.Y(i)/datos.R;
-    
-    dif = 0;  DIF = 1000;
-    lambda_sol = 0;
-    trobat = 0; delta = 10^-5;
-    
-    j = 1;
-    
-    while j <= length(alphas) && trobat == 0
-        lambda_i = (tan( solucio.theta_lin(i) - deg2rad(alphas(j)) ) - lambda_c )* r;
-        
-        %cl = pchip(aero.funcio_alpha,aero.funcio_cl , alphas(j)); %Interpola per trobar cl per aquell angle
-        %cd = pchip(aero.funcio_alpha,aero.funcio_cd, alphas(j)); %Interpola per trobar cd per aquell angle
-        
-        % VA MOLT LENT AMB PCHIP = si els coeficients de alphes van igual en
-        % aero.funcio_cl = puc fer cl(j) 
-        % S'HA DE FER QUE ALPHAS = AERO.funcioalphas = OJOOOO!!
-        
-        cl = aero.funcio_cl(j); cd = aero.funcio_cd(j);
-        
-        phi = atan((lambda_c+lambda_i)/r);
-        
-        %lambda_i_tip = abs(Vi_tip)/(datos.omega*datos.R);
-        %phi = atan((lambda_c+lambda_i_tip)/r);
-        
-        %lambda_i_root = abs(Vi_root)/(datos.omega*datos.R);
-        %phi = atan((lambda_c+lambda_i_root)/r);
-        
-        
-        
-        f = datos.nb / 2 * ( 1 - datos.Y(i)/datos.R ) / ( (datos.Y(i)/datos.R) * sin(phi));
-        F = 2/pi * acos( exp(-f) );
-        
-        if F>1
-            disp('fatalisima');
-        end
-        
-        num1 = 8*F*(lambda_i+lambda_c)*lambda_i*r;
-        num2 = ((r^2+(lambda_c+lambda_i)^2)*(cl*cos(phi) - cd*sin(phi))) *solucio.sigma(i);
-        
-    dif = num1 - num2;
-
-    if (abs(dif) < abs(DIF)) %&& lambda_i > 0 %% SI NO ENS QUEDEM AMB EL MÉS PETIT    
-        lambda_sol = lambda_i;
-       DIF = abs(dif);
-       alpha_sol = alphas(j);
-    end
-    
-       if (abs(dif) < delta)
-           lambda_sol = lambda_i;
-           alpha_sol = alphas(j); 
-           trobat = 1;
-       end
-          
-    
-    
-        j=j+1;
-    
-    end
-    
-    Vi = lambda_sol*datos.omega*datos.R;
-    alpha = alpha_sol;
-    solucio.phi_BEMp(i) = dif;
-    
-    
 end
 
 function [Vi, LAMBDA, PHI, ALPHA, IND] = Vi_BEM2 (datos, solucio, i)
@@ -482,40 +395,40 @@ for i=1:datos.N
 end
 
 
-figure
-plot(datos.Y/datos.R, solucio.corda_lin*100); grid on;
-title ('Cuerda obtenida mediante método linealizado','Interpreter','latex','Fontsize',18);
-xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
-ylabel('Cuerda [cm]','Interpreter','latex','Fontsize',16);
-
-
-figure
-plot(datos.Y/datos.R, rad2deg(solucio.theta));
-hold on; grid on;
-plot(datos.Y/datos.R, rad2deg(solucio.theta_lin),'-.');
-title ('$$\theta$$ ideal y linealizada','Interpreter','latex','Fontsize',24);
-xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
-ylabel('$$\theta$$ [deg]','Interpreter','latex','Fontsize',16);
-legend('Ideal','Linealizada','Interpreter','latex','Fontsize',16);
-
-
-figure
-plot(datos.Y/datos.R,solucio.sigma);
-title ('$$\sigma$$ ideal y linealizada','Interpreter','latex','Fontsize',24);
-hold on;  grid on;
-plot(datos.Y/datos.R,solucio.sigma_lin,'-.');
-xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
-ylabel('$$\sigma$$','Interpreter','latex','Fontsize',16);
-legend('Ideal','Linealizada','Interpreter','latex','Fontsize',16);
-
-
 % figure
-% plot( datos.Y/datos.R , rad2deg(solucio.theta));
-% hold on;  grid on;
-% plot( datos.Y/datos.R , rad2deg(solucio.theta_lin),'-.');
-% title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',20);
+% plot(datos.Y/datos.R, solucio.corda_lin*100); grid on;
+% title ('Cuerda obtenida mediante método linealizado','Interpreter','latex','Fontsize',18);
 % xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
-% ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
+% ylabel('Cuerda [cm]','Interpreter','latex','Fontsize',16);
+% 
+% 
+% figure
+% plot(datos.Y/datos.R, rad2deg(solucio.theta));
+% hold on; grid on;
+% plot(datos.Y/datos.R, rad2deg(solucio.theta_lin),'-.');
+% title ('$$\theta$$ ideal y linealizada','Interpreter','latex','Fontsize',24);
+% xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
+% ylabel('$$\theta$$ [deg]','Interpreter','latex','Fontsize',16);
+% legend('Ideal','Linealizada','Interpreter','latex','Fontsize',16);
+% 
+% 
+% figure
+% plot(datos.Y/datos.R,solucio.sigma);
+% title ('$$\sigma$$ ideal y linealizada','Interpreter','latex','Fontsize',24);
+% hold on;  grid on;
+% plot(datos.Y/datos.R,solucio.sigma_lin,'-.');
+% xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
+% ylabel('$$\sigma$$','Interpreter','latex','Fontsize',16);
+% legend('Ideal','Linealizada','Interpreter','latex','Fontsize',16);
+
+
+% % figure
+% % plot( datos.Y/datos.R , rad2deg(solucio.theta));
+% % hold on;  grid on;
+% % plot( datos.Y/datos.R , rad2deg(solucio.theta_lin),'-.');
+% % title ('$$\theta$$ ideal','Interpreter','latex','Fontsize',20);
+% % xlabel('r ($$ r = \frac{Y}{R}$$)','Interpreter','latex','Fontsize',16);
+% % ylabel('$$\theta_{ideal}$$','Interpreter','latex','Fontsize',16);
 
 end
 
@@ -526,88 +439,6 @@ global solucio
     solucio.Vi_mth = sqrt(0.25*datos.W/(2 * datos.rho * A)); %0.25*W perque hi ha 4 rotors
 
 end
-
-
-
-function [velocitat,velocitat_p] = Vi_BEM (datos,solucio,i,prandtl)
-delta = 10;
-i 
-lambda_i = 3.5; %Per iniciar la iteracio suposem una lambda_i inicial
-
-while delta>10e-2
-global aero
-syms lamb
-lambda_c = datos.Vc/(datos.omega*datos.R);
-r = datos.Y(i)/datos.R;
-alpha = solucio.theta_lin(i) -  atan((lambda_c+lambda_i)/r);
-cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
-cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
-phi = atan((lambda_c+lambda_i)/r);
-f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
-F = 2/pi*acos(exp(-f));
-
-
-eqn = 8*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
-    cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
-
-sol = solve(eqn,lamb);
-    
-for j=1:length(sol)
-    bool = isreal(double(sol(j)));
-    if bool == 1
-        sol_bona = double(sol(j));
-    end
-end
-
-delta = abs(double(sol_bona)-lambda_i);
-lambda_i = double(sol_bona);
-
-end
-
-if prandtl == true
-delta_p=10;
-lambda_p = 3.5;
-
-while delta_p>10e-2
-global aero
-syms lamb
-lambda_c = datos.Vc/(datos.omega*datos.R);
-r = datos.Y(i)/datos.R;
-alpha = solucio.theta_lin(i) -  atan((lambda_c+lambda_i)/r);
-cl = pchip(aero.funcio_alpha,aero.funcio_cl , alpha);
-cd = pchip(aero.funcio_alpha,aero.funcio_cd, alpha);
-phi = atan((lambda_c+lambda_i)/r);
-f = datos.nb/2*(1-datos.Y(i)/datos.R)/((datos.Y(i)/datos.R)*phi);
-F = 2/pi*acos(exp(-f));
-
-if F>1
-    disp('fatalisimaaa');
-end
-
-eqn_p = 8*F*(lamb+lambda_c)*lamb*r == (r^2+(lambda_c+lamb)^2)*(cl*cos(atan((lambda_c+lamb)/r) )-...
-    cd*sin(atan((lambda_c+lamb)/r)) )*solucio.sigma(i);
-sol_p = solve(eqn_p,lamb);
-
-for k=1:length(sol_p)
-    bool = isreal(double(sol_p(k)));
-    if bool == 1
-        sol_bona_p = double(sol_p(k));
-    end
-end
-delta_p = abs(double(sol_bona_p)-lambda_p);
-lambda_p = double(sol_bona_p);
-end
-
-end
-
-velocitat = lambda_i*datos.omega*datos.R;
-velocitat_p = 0;
-if prandtl == true
-velocitat_p = lambda_p*datos.omega*datos.R;
-end
-
-end
-
 
 function [SIGMA, THETA] = BEM (datos, i)
     global aero
@@ -664,7 +495,7 @@ coef = dlmread('Polar_SC2110.dat');
         end
     end    
     
-    fprintf('El coeficiente de cl_opt: %f y el Ã¡ngulo de alpha_opt: %f \n',aero.cl_opt, aero.alp_opt);
+   % fprintf('El coeficiente de cl_opt: %f y el Ã¡ngulo de alpha_opt: %f \n',aero.cl_opt, aero.alp_opt);
     
     % Ens inventem punts per cl i cd per alpha propers a pi/2 ==> de cara
     % al fsolve (que segons el profe dona errors) a banda i banda per
