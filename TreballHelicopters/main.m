@@ -8,7 +8,7 @@ tic
 datos.n_rotors = 4; %num de rotors
 datos.DL = 80; % DL = W/A 
 datos.W = 9.8 * (0.5+0.7*0.2);
-datos.R = sqrt( datos.W / (9.8 * datos.DL * 4 * pi)); %radi del rotor
+datos.R = sqrt( datos.W / (9.8 * datos.DL * pi)); %radi del rotor
 datos.Vc = 0; %Velocitat de climbing [m/s]
 datos.nb = 2; % num de pales
 
